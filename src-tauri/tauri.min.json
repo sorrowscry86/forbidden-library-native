@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeDevCommand": "pnpm run dev",
+    "beforeBuildCommand": "pnpm run build",
+    "devPath": "http://localhost:1430",
+    "distDir": "../build"
+  },
+  "package": {
+    "productName": "Forbidden Library",
+    "version": "2.0.0"
+  },
+  "tauri": {
+    "windows": [
+      {
+        "title": "Forbidden Library",
+        "width": 1200,
+        "height": 800
+      }
+    ]
+  }
+}

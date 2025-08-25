@@ -1,0 +1,20 @@
+{
+  "name": "forbidden-library-deployment-tests",
+  "version": "1.0.0",
+  "description": "Deployment testing for Forbidden Library",
+  "main": "test-deployment.js",
+  "scripts": {
+    "test": "node test-deployment.js",
+    "test:headless": "node test-deployment.js --headless",
+    "install-deps": "npm install playwright"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

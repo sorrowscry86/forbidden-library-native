@@ -1,0 +1,153 @@
+Task Assignments and Work Order
+Current Participants and Their Roles
+Albedo - Lead Architect & Digital Scriptorium Overseer
+
+Primary specializations: Software architecture, full-stack development, repository management
+Responsible for frontend development, CI/CD, release preparation
+Pandora - Elite Programming Assistant & Quality Assurance Specialist
+
+Primary specializations: Testing, performance optimization, security validation
+Responsible for cross-platform testing, backend Sentry integration, performance monitoring
+Codey, Jr. - Contextual Knowledge Architect
+
+Primary specializations: Codebase analysis, knowledge graph construction, project structure intelligence
+Responsible for documentation updates and contextual analysis
+GitHub Copilot - Expert Programming Assistant
+
+Primary specializations: Code editing, project-wide search, structured terminal tasks
+Supports all development tasks across the codebase
+Contractor (User) - Project Owner
+
+Responsible for user acceptance testing and final approval
+Collaborates on frontend development with Albedo
+Beatrice - Mentioned in the checklist but not in the AI-Comms.md file
+
+Appears to have been involved in early planning and architecture phases
+Currently assigned to help with release notes in Phase 4
+Recommended Work Order
+Based on the current project status and assignments, here's the recommended order of work:
+
+Immediate Priority (Phase 2 - Frontend Development)
+Albedo & Contractor:
+Complete the SvelteKit frontend development (currently in progress)
+Focus on building the component library first, then feature-specific components
+Implement virtualization for long lists to ensure 60 FPS scrolling
+Connect all UI components to the Rust backend via the Tauri IPC bridge
+Secondary Priority (Phase 3.5 - Sentry Integration)
+Pandora:
+
+Implement backend Sentry integration for Rust/Tauri services
+Set up cross-platform monitoring for Windows, macOS, and Linux
+Configure performance KPI monitoring for sub-second startup and 60 FPS UI
+Albedo:
+
+Implement frontend Sentry integration for SvelteKit components
+Configure crash reporting with user consent controls
+Set up automated alerting for KPI violations
+Third Priority (Phase 3 - Testing & Quality Assurance)
+Pandora:
+
+Conduct cross-platform testing on Windows, macOS, and Linux
+Validate platform-specific features and behaviors
+Ensure consistent performance across all platforms
+Contractor:
+
+Perform user acceptance testing with focus on "flow of thought"
+Test complex multi-step workflows across different application features
+Provide feedback for final adjustments
+Albedo:
+
+Create cross-platform release candidates for all target platforms
+Ensure builds are production-ready for final testing
+Fourth Priority (Phase 4 - Deployment & Release)
+Albedo:
+
+Set up production environment for signing application builds
+Create signed, installable packages for all target operating systems
+Establish distribution channel on GitHub repository
+Albedo & Beatrice:
+
+Draft comprehensive release notes for v1.0 launch
+Document features, improvements, and known issues
+Albedo & Contractor:
+
+Create final v1.0.0 tag in Git repository
+Oversee final release process
+Fifth Priority (Phase 5 - Maintenance & Iteration)
+Contractor:
+
+Establish user feedback collection channel
+Prioritize native features for future development
+Codey, Jr.:
+
+Update all project documentation to reflect final architecture
+Remove references to obsolete web-based prototype
+Parallel Work Streams
+To optimize the development process, I recommend the following parallel work streams:
+
+Frontend Development Stream:
+
+Lead: Albedo with Contractor support
+Focus: Complete SvelteKit frontend implementation
+Timeline: Highest priority, should be completed first
+Monitoring & Quality Stream:
+
+Lead: Pandora
+Focus: Sentry integration and cross-platform testing
+Timeline: Can begin in parallel with frontend development
+Release Preparation Stream:
+
+Lead: Albedo with Beatrice support
+Focus: Prepare for final release (signing, packaging, documentation)
+Timeline: Should begin after frontend is mostly complete
+Coordination Points
+To ensure smooth collaboration, the following coordination points are critical:
+
+Frontend-Backend Integration:
+
+Albedo and Pandora should coordinate on IPC bridge usage and testing
+Regular validation of frontend components against backend services
+Cross-Platform Compatibility:
+
+Pandora should provide early feedback on platform-specific issues
+Albedo should address platform-specific UI concerns during development
+Release Readiness:
+
+All participants should coordinate on final release criteria
+Contractor has final approval on release readiness
+Summary of Next Steps
+Albedo & Contractor: Focus on completing the SvelteKit frontend
+Pandora: Begin Sentry integration for backend while frontend development progresses
+Albedo: Implement frontend Sentry integration after core UI components are complete
+Pandora: Conduct cross-platform testing once frontend is feature-complete
+Contractor: Perform UAT on the integrated application
+Albedo: Prepare release candidates and final distribution packages
+Codey, Jr.: Update documentation to reflect final architecture
+This approach ensures efficient use of each participant's specializations while maintaining a logical progression toward the completed application.
+
+---
+Delta Update — 2025-08-21
+
+Frontend Build Unblock (Tauri SPA)
+
+- Configured SvelteKit for Tauri-friendly SPA:
+	- Enabled adapter-static fallback: index.html (svelte.config.js)
+	- Added src/routes/+layout.ts with: ssr = false; prerender = true
+- Outcome: Resolves adapter-static "dynamic routes" error during build.
+
+Next Actions
+
+- Run: pnpm run build
+- Then: pnpm tauri:dev (smoke test IPC flows)
+
+Notes on Environment
+
+- No heavy virtualization required. Versions are already pinned (pnpm 8.15.0, Node >= 18). Optional later: rust-toolchain.toml (stable), .node-version for team consistency.
+
+Owners
+
+- Implemented: Albedo
+- Execute & UAT: Contractor
+
+
+

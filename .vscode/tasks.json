@@ -1,0 +1,89 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install Node deps (pnpm)",
+			"type": "shell",
+			"command": "pnpm install",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Reinstall Node deps (pnpm)",
+			"type": "shell",
+			"command": "pnpm install",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Typecheck Svelte (pnpm check)",
+			"type": "shell",
+			"command": "pnpm run check",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build Svelte (pnpm build)",
+			"type": "shell",
+			"command": "pnpm run build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Run Tauri Dev",
+			"type": "shell",
+			"command": "pnpm run tauri:dev",
+			"args": [],
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Install Tailwind plugins",
+			"type": "shell",
+			"command": "pnpm install",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Typecheck Svelte (pnpm check) again",
+			"type": "shell",
+			"command": "pnpm run check",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Typecheck Svelte (pnpm check) final",
+			"type": "shell",
+			"command": "pnpm run check",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build Svelte (pnpm build) after fixes",
+			"type": "shell",
+			"command": "pnpm run build",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

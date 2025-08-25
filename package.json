@@ -1,0 +1,86 @@
+{
+  "name": "forbidden-library-native",
+  "version": "2.0.0",
+  "description": "Privacy-first, high-performance desktop application for interacting with powerful language models",
+  "private": true,
+  "type": "module",
+  "keywords": [
+    "tauri",
+    "svelte",
+    "sveltekit",
+    "rust",
+    "desktop",
+    "ai",
+    "llm",
+    "privacy",
+    "native"
+  ],
+  "author": {
+    "name": "VoidCat RDC",
+    "email": "SorrowsCry86@voidcat.org",
+    "url": "https://github.com/sorrowscry86"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sorrowscry86/forbidden-library-native.git"
+  },
+  "homepage": "https://github.com/sorrowscry86/forbidden-library-native",
+  "bugs": {
+    "url": "https://github.com/sorrowscry86/forbidden-library-native/issues"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "lint": "prettier --check . && eslint .",
+    "format": "prettier --write .",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+  "tauri:build": "tauri build",\n  "tauri:preview": "tauri build --debug && tauri dev --no-watch",
+  "version:bump": "node scripts/bump-version.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.1",
+    "@sveltejs/kit": "^2.0.0",
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@tauri-apps/cli": "^1.5.7",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "autoprefixer": "^10.4.16",
+  "@tailwindcss/forms": "^0.5.9",
+  "@tailwindcss/typography": "^0.5.15",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-svelte": "^2.35.1",
+    "postcss": "^8.4.32",
+    "prettier": "^3.1.1",
+    "prettier-plugin-svelte": "^3.1.2",
+    "svelte": "^4.2.7",
+    "svelte-check": "^3.6.0",
+    "tailwindcss": "^3.3.0",
+    "tslib": "^2.4.1",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.3",
+    "vitest": "^1.2.0"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^1.5.1",
+    "marked": "^11.1.1",
+    "katex": "^0.16.9",
+    "highlight.js": "^11.9.0",
+    "lucide-svelte": "^0.303.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
+
+

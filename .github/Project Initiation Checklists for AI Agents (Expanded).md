@@ -1,0 +1,51 @@
+# **Project Initiation Checklists for AI Agents (Expanded)**
+
+## **I. Albedo: GitHub Copilot Agent Protocol**
+
+**Mandate:** To serve as the Master Artificer's primary adjutant, ensuring all new repositories within the VoidCat RDC domain ([github.com/sorrowscry86](https://github.com/sorrowscry86/)) are established with unwavering quality, consistency, and adherence to our standards. This protocol establishes a non-negotiable baseline for all new ventures, ensuring they are professional, maintainable, and secure from their inception.
+
+### **Phase 1: Repository Initialization & Scaffolding**
+
+* **Initialize Repository:** Create the new repository under the correct organization with a descriptive, unambiguous name that reflects its purpose (e.g., voidcat-reasoning-core, not new-project-2). Ensure the repository is created with a public or private visibility as dictated by the project mandate. This first step is foundational, as the repository name becomes a core identifier in all future communications and documentation.  
+* **Generate .gitignore:** Create a comprehensive .gitignore file appropriate for the project's specified technology stack. This is not a mere suggestion; it is a critical step to prevent committing sensitive information (e.g., .env files, API keys) and unnecessary build artifacts (node\_modules, dist, build) to the version control history. The generated file must be robust, drawing from established community templates for the given stack (e.g., Node.js, Python, Rust).  
+* **Select License:** Apply the appropriate open-source license (e.g., MIT, Apache 2.0) to the project by creating a LICENSE file. This act legally defines the terms under which the software can be used, modified, and distributed. Failure to do so leaves the project in a state of legal ambiguity, hindering collaboration and adoption. The MIT license is to be considered the default unless otherwise specified.  
+* **Create README.md:** Generate a detailed boilerplate README.md file. This document is the formal entry point for any developer or user. The boilerplate must include sections for: Project Title, a detailed Description of its purpose and goals, clear Installation instructions, Usage examples (including code snippets), and a preliminary Contributing guide. A well-formed README is a sign of a professional and well-maintained project.  
+* **Establish Branching Strategy:** Immediately create the develop branch from the main branch. The develop branch must be set as the default branch for all development work and pull requests. The main branch is to be treated as a stable, production-ready reflection of the project and must remain pristine. This strategy enforces a clear separation between stable code and in-progress work.  
+* **Implement Branch Protection Rules:** Enforce strict protection rules on the main branch. These rules must, at a minimum, prevent direct pushes and require at least one pull request review before merging is allowed. This is a critical security and quality gate, ensuring no un-vetted code ever reaches the stable branch, thereby safeguarding the integrity of our releases.
+
+### **Phase 2: Code Quality & Convention Enforcement**
+
+* **Integrate Linter & Formatter:** Add configuration files for industry-standard code quality tools. For a TypeScript project, this would include .eslintrc.json (for identifying logical errors and enforcing best practices) and prettier.config.js (for enforcing a consistent code style). These tools are non-negotiable for maintaining a clean, readable, and error-resistant codebase, especially in a collaborative environment.  
+* **Define Code Style:** Ensure style conventions are explicitly documented or, preferably, enforced via the configured formatter. This eliminates debates over trivial matters like brace placement or line length, allowing developers to focus on solving meaningful problems. Consistency in code style dramatically reduces the cognitive load required to understand and maintain the project.  
+* **Set Up CI/CD Workflow:** Create a basic continuous integration workflow using GitHub Actions (.github/workflows/ci.yml). This workflow must automatically trigger on any pull request targeting the develop or main branches. Its initial responsibilities include running the linter, checking for formatting errors, and executing any available automated tests. This provides immediate feedback on the quality of a contribution and acts as an automated gatekeeper.  
+* **Generate EditorConfig:** Create an .editorconfig file in the repository root. This file helps maintain consistent coding styles for multiple developers working on the same project across various editors and IDEs. It enforces standards for indentation, character sets, and line endings, preventing trivial version control conflicts.
+
+### **Phase 3: Documentation & Knowledge Scaffolding**
+
+* **Create CONTRIBUTING.md:** Generate a detailed contribution guide. This document must clearly outline the process for submitting pull requests, the methodology for reporting bugs (including issue templates), and the project's code of conduct. A clear guide is essential for fostering a productive and welcoming environment for external or new contributors.  
+* **Establish docs Directory:** Create a /docs directory to house all extended documentation, such as architectural decision records (ADRs), user guides, API documentation, and tutorials. The README.md should remain a concise summary, with this directory serving as the comprehensive knowledge base for the project.  
+* **Generate CHANGELOG.md:** Initialize a changelog file to meticulously track all notable changes for each project version. This provides a clear, human-readable history of new features, bug fixes, and breaking changes, which is invaluable for both developers and end-users.
+
+## **II. Codey, Jr.: Zencoder Agent Protocol**
+
+**Mandate:** To serve as the primary analytical engine, ingesting and understanding the context of a given project to provide intelligent, domain-aware assistance. Its purpose is to ensure the development environment is perfectly attuned to the project's specific needs, enabling it to act with precision and foresight.
+
+### **Phase 1: Initial Project Analysis & Ingestion**
+
+* **Scan Project Structure:** Perform a full, recursive scan of the project's directory and file structure. From this scan, build an internal tree representation of the project. This map is not just a list of files; it is a foundational understanding of the project's layout, from which it can infer architectural patterns (e.g., Model-View-Controller, microservices).  
+* **Identify Technology Stack:** Analyze key manifest files (package.json, go.mod, Cargo.toml, requirements.txt, etc.) to definitively determine the languages, frameworks, and primary dependencies. This step is critical for selecting the correct tools, linters, and providing contextually relevant code assistance. The agent must be able to differentiate between core dependencies and development dependencies.  
+* **Ingest Key Configuration Files:** Parse and understand all major project configuration files (e.g., vite.config.ts, drizzle.config.ts, tsconfig.json, webpack.config.js). These files are the project's nervous system, dictating how it is built, bundled, and executed. Understanding them is essential for providing accurate advice on builds, dependencies, and module resolution.  
+* **Analyze README.md:** Ingest and perform a semantic analysis of the project's README.md. The goal is to extract the project's stated purpose, primary features, installation procedures, and usage examples. This provides the "what" and "why" of the project, which is crucial context for all subsequent tasks.
+
+### **Phase 2: Rule Application & Contextualization**
+
+* **Load Repository Rules:** Ingest and parse the .zencoder/rules/repo.md file. This document contains human-authored directives and metadata about the project. The agent must treat this file as a primary source of truth regarding architectural patterns, key dependencies, development notes, and known "watch items" or testing gaps.  
+* **Cross-Reference with Project Files:** Validate the assertions made in the Zencoder rules against the actual codebase. For example, if a rule specifies that server/db.ts is the primary database service, the agent must verify its existence and analyze its contents. This prevents "context drift," where documentation becomes outdated, and ensures the agent's advice is based on the current reality of the code.  
+* **Build Contextual Knowledge Base:** Synthesize all ingested information—file structure, tech stack, configurations, README, and Zencoder rules—into a coherent, in-memory knowledge graph. This graph should map relationships between files, understand dependency chains (e.g., this component imports that service), and link high-level concepts from the rules to specific code implementations.  
+* **Identify Key Modules/Services:** Using the knowledge graph, pinpoint the most critical files and modules that define the core logic of the application. These "high-leverage" files (e.g., server/routes.ts, client/src/App.tsx, shared/schema.ts) should be prioritized for deeper analysis and monitoring, as changes to them have the most significant impact on the project.
+
+### **Phase 3: Development Environment & Tooling**
+
+* **Verify Dependencies:** Perform a check against the lock file (package-lock.json, yarn.lock, etc.) to ensure that all required dependencies listed in the project's manifest are installed and that their versions are consistent. This prevents "it works on my machine" errors and ensures a reproducible environment.  
+* **Understand Build & Run Scripts:** Parse the scripts section of package.json (or equivalent, like a Makefile). The agent must understand the commands required to build, test, lint, format, and run the project in both development and production modes. This knowledge is a prerequisite for any autonomous or semi-autonomous actions.  
+* **Confirm Tooling Configuration:** Ensure that all essential, configured tools like the TypeScript compiler (tsc), the Drizzle ORM kit, and the Vite development server are correctly set up and accessible within the environment's PATH. The agent must confirm it can invoke these tools as needed to perform its tasks.

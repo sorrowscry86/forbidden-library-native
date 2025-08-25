@@ -1,0 +1,128 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'v*.*.*'
+      - 'v*.*.*-rc*'
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Install dependencies (frontend)
+        run: pnpm install --frozen-lockfile
+
+      # macOS code signing & notarization placeholders (requires secrets)
+      - name: Import Apple certificate (macOS)
+        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$APPLE_CERTIFICATE" | base64 --decode > apple.cer.p12
+          security create-keychain -p "temp-pass" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "temp-pass" build.keychain
+          security import apple.cer.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "temp-pass" build.keychain
+
+      - name: Set macOS notarization env
+        if: runner.os == 'macOS'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "APPLE_ID=$APPLE_ID" >> $GITHUB_ENV
+          echo "APPLE_APP_SPECIFIC_PASSWORD=$APPLE_APP_SPECIFIC_PASSWORD" >> $GITHUB_ENV
+          echo "APPLE_TEAM_ID=$APPLE_TEAM_ID" >> $GITHUB_ENV
+
+      # Windows code signing placeholder (requires PFX & password)
+      - name: Import Code Signing Cert (Windows)
+        if: runner.os == 'Windows' && env.WIN_CERT_PFX != ''
+        shell: pwsh
+        env:
+          WIN_CERT_PFX: ${{ secrets.WIN_CERT_PFX }}
+          WIN_CERT_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
+        run: |
+          $pfxPath = "$env:RUNNER_TEMP\cert.pfx"
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WIN_CERT_PFX))
+          certutil -f -p $env:WIN_CERT_PASSWORD -importpfx $pfxPath
+
+      # Linux GPG signing placeholder (for .deb / AppImage detached signatures)
+      - name: Import GPG key (Linux)
+        if: runner.os == 'Linux' && env.GPG_PRIVATE_KEY != ''
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+          echo "passphrase=$GPG_PASSPHRASE" >> ~/.gnupg/gpg-agent.conf
+
+      - name: Build (Tauri)
+        run: pnpm tauri build
+
+      - name: Compute SHA256 checksums
+        shell: bash
+        run: |
+          mkdir -p dist
+          if ls src-tauri/target/release/bundle 1> /dev/null 2>&1; then
+            find src-tauri/target/release/bundle -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.AppImage' \) -print0 | while IFS= read -r -d '' f; do
+              fname=$(basename "$f")
+              sha256sum "$f" | awk '{print $1}' > "dist/$fname.sha256"
+              cp "$f" dist/
+            done
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: forbidden-library-${{ runner.os }}
+          path: dist/*
+
+  release:
+    name: Publish Release
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Aggregate assets
+        run: |
+          mkdir -p release
+          find ./artifacts -type f -exec cp {} ./release/ \;
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  forbidden-library:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: forbidden-library
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs:/var/log/nginx
+    networks:
+      - forbidden-library-network
+
+  # Development service (optional)
+  forbidden-library-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: forbidden-library-dev
+    ports:
+      - "1430:1430"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+    profiles:
+      - dev
+
+networks:
+  forbidden-library-network:
+    driver: bridge
+
+volumes:
+  logs:

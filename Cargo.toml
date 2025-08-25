@@ -1,0 +1,89 @@
+[workspace]
+resolver = "2"
+members = ["src-tauri"]
+
+[workspace.package]
+version = "2.0.0"
+authors = ["VoidCat RDC <SorrowsCry86@voidcat.org>"]
+license = "MIT"
+repository = "https://github.com/sorrowscry86/forbidden-library-native"
+homepage = "https://github.com/sorrowscry86/forbidden-library-native"
+edition = "2021"
+
+[workspace.dependencies]
+# Tauri dependencies
+tauri = { version = "1.5", features = [
+  "clipboard-all",
+  "dialog-ask",
+  "dialog-confirm",
+  "dialog-message",
+  "dialog-open",
+  "dialog-save",
+  "fs-copy-file",
+  "fs-create-dir",
+  "fs-exists",
+  "fs-read-dir",
+  "fs-read-file",
+  "fs-remove-dir",
+  "fs-remove-file",
+  "fs-rename-file",
+  "fs-write-file",
+  "global-shortcut-all",
+  "path-all",
+  "shell-open",
+  "system-tray",
+  "window-close",
+  "window-hide",
+  "window-maximize",
+  "window-minimize",
+  "window-set-always-on-top",
+  "window-set-decorations",
+  "window-set-focus",
+  "window-set-fullscreen",
+  "window-set-icon",
+  "window-set-max-size",
+  "window-set-min-size",
+  "window-set-position",
+  "window-set-size",
+  "window-set-skip-taskbar",
+  "window-set-title",
+  "window-show",
+  "window-start-dragging",
+  "window-unmaximize",
+  "window-unminimize"
+] }
+tauri-build = { version = "1.5", features = [] }
+
+# Serde for serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Tokio for async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# SQLite with encryption
+rusqlite = { version = "0.30", features = ["bundled", "chrono"] }
+rusqlcipher = "0.14"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# UUID generation
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# HTTP client for API requests
+reqwest = { version = "0.11", features = ["json", "stream"] }
+
+# File system utilities
+walkdir = "2.4"
+
+# Encryption utilities
+ring = "0.17"
+
+# Date and time
+chrono = { version = "0.4", features = ["serde"] }
