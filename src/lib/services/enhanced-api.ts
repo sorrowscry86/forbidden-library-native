@@ -369,7 +369,7 @@ export async function invokeWithIntelligentRetry<T>(
   config: Partial<RetryConfig> = {}
 ): Promise<T> {
   const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...config };
-  let lastError: AppError | Error = new Error('No attempts made');
+  let lastError: AppError | Error;
   let attempt = 0;
 
   while (attempt <= retryConfig.maxRetries) {
