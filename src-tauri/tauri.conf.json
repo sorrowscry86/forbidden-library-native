@@ -14,9 +14,18 @@
   "tauri": {
     "allowlist": {
       "all": false,
-      "shell": {
+      "fs": {
         "all": false,
-        "open": true
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true,
+        "copyFile": true,
+        "createDir": true,
+        "removeDir": true,
+        "removeFile": true,
+        "renameFile": true,
+        "exists": true,
+        "scope": ["$APPDATA", "$APPDATA/**", "$DESKTOP", "$DESKTOP/**", "$DOCUMENT", "$DOCUMENT/**", "$DOWNLOAD", "$DOWNLOAD/**"]
       },
       "dialog": {
         "all": false,
@@ -26,23 +35,6 @@
         "open": true,
         "save": true
       },
-      "fs": {
-        "all": false,
-        "readFile": true,
-        "writeFile": true,
-        "readDir": true,
-        "createDir": true,
-        "removeDir": true,
-        "removeFile": true,
-        "renameFile": true,
-        "copyFile": true,
-        "exists": true,
-        "scope": [
-          "$APPDATA",
-          "$APPDATA/*",
-          "$APPDATA/**"
-        ]
-      },
       "path": {
         "all": true
       },
@@ -50,62 +42,91 @@
         "all": false,
         "close": true,
         "hide": true,
+        "show": true,
         "maximize": true,
         "minimize": true,
-        "setAlwaysOnTop": true,
-        "setDecorations": true,
-        "setFocus": true,
-        "setFullscreen": true,
-        "setIcon": true,
-        "setMaxSize": true,
-        "setMinSize": true,
-        "setPosition": true,
-        "setSize": true,
-        "setSkipTaskbar": true,
-        "setTitle": true,
-        "show": true,
-        "startDragging": true,
         "unmaximize": true,
-        "unminimize": true
+        "unminimize": true,
+        "setResizable": true,
+        "setTitle": true,
+        "setSize": true,
+        "setMinSize": true,
+        "setMaxSize": true,
+        "setPosition": true,
+        "setFullscreen": true,
+        "setFocus": true,
+        "setIcon": true,
+        "setSkipTaskbar": true,
+        "setDecorations": true,
+        "setAlwaysOnTop": true,
+        "center": true,
+        "requestUserAttention": true,
+        "print": true
       },
-      "globalShortcut": {
+      "shell": {
+        "all": false,
+        "open": true,
+        "scope": [
+          {
+            "name": "sh",
+            "cmd": "sh",
+            "args": ["-c", { "validator": "\\\\S+" }]
+          },
+          {
+            "name": "cmd",
+            "cmd": "cmd",
+            "args": ["/C", { "validator": "\\\\S+" }]
+          }
+        ]
+      },
+      "notification": {
         "all": true
       },
       "clipboard": {
         "all": true
+      },
+      "globalShortcut": {
+        "all": true
+      },
+      "os": {
+        "all": true
+      },
+      "app": {
+        "all": true
       }
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.voidcat.forbidden-library",
-      "icon": [
-        "icons/icon.ico"
-      ]
-    },
-    "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https: wss:; font-src 'self' data:;"
     },
     "windows": [
       {
-        "fullscreen": false,
-        "resizable": true,
         "title": "Forbidden Library",
-        "width": 1400,
-        "height": 1000,
+        "width": 1200,
+        "height": 800,
         "minWidth": 800,
         "minHeight": 600,
         "center": true,
-        "transparent": false,
+        "resizable": true,
+        "maximizable": true,
+        "minimizable": true,
+        "closable": true,
         "decorations": true,
         "alwaysOnTop": false,
-        "skipTaskbar": false
+        "fullscreen": false,
+        "focus": true,
+        "transparent": false,
+        "skipTaskbar": false,
+        "fileDropEnabled": true,
+        "titleBarStyle": "Visible"
       }
     ],
+    "security": {
+      "csp": null
+    },
     "systemTray": {
-      "iconPath": "icons/icon.ico",
+      "iconPath": "icons/icon.png",
       "iconAsTemplate": true,
       "menuOnLeftClick": false
+    },
+    "updater": {
+      "active": false
     }
   }
 }

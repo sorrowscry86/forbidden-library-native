@@ -1,16 +1,20 @@
-﻿<script>
+<script>
 import '../app.css';
 import { onMount } from 'svelte';
-import { invokeWithTimeout, ms } from '$lib/services/api';
 import { page } from '$app/stores';
+import { safeInvoke, isTauriAvailable } from '$lib/utils/enhanced-tauri-detection';
 
 let appInfo = { name: '', version: '' };
+let isDesktop = false;
 
 onMount(async () => {
+    isDesktop = isTauriAvailable();
+    
     try {
-        appInfo = await invokeWithTimeout('get_app_version', undefined, ms(5));
+        appInfo = await safeInvoke('get_app_version');
     } catch (error) {
         console.error('Failed to get app version:', error);
+        appInfo = { name: 'Forbidden Library', version: '2.0.0' };
     }
 });
 </script>
@@ -43,6 +47,15 @@ onMount(async () => {
                     >
                         Planning
                     </a>
+                    {#if isDesktop}
+                        <a 
+                            href="/desktop" 
+                            class="text-sm font-medium {$page.url.pathname === '/desktop' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors flex items-center space-x-1"
+                        >
+                            <span>🖥️</span>
+                            <span>Desktop</span>
+                        </a>
+                    {/if}
                     <a 
                         href="/settings" 
                         class="text-sm font-medium {$page.url.pathname === '/settings' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
