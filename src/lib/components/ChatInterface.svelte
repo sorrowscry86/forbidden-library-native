@@ -191,7 +191,7 @@ function handleKeyPress(event: KeyboardEvent) {
 					</svg>
 				</button>
 
-<button class="p-2 text-gray-400 hover:text-white transition-colors" title="Archive conversation" on:click={() => archiveConversation(conversation.id)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8l6 6 6-6"></path></svg></button>
+<button class="p-2 text-gray-400 hover:text-white transition-colors" title="Archive conversation" on:click={() => conversation.id && archiveConversation(conversation.id)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8l6 6 6-6"></path></svg></button>
 			</div>
 		</div>
 	</div>

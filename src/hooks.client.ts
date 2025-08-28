@@ -2,7 +2,6 @@
 // Initializes Sentry on the client side only, respecting telemetry opt-in and env vars.
 
 import * as Sentry from '@sentry/sveltekit';
-import type { ErrorEvent, EventHint } from '@sentry/types';
 // Minimal local types to avoid extra dependency on '@sentry/types'
 type Breadcrumb = { data?: Record<string, unknown> };
 type SentryEvent = { breadcrumbs?: Breadcrumb[] } & Record<string, unknown>;
@@ -41,7 +40,7 @@ function isTelemetryEnabled(): boolean {
     profilesSampleRate: isNaN(profiles) ? 0 : profiles,
     integrations: [],
     // Basic scrubbing policy; can be extended in VOI-78
-  beforeSend(event: ErrorEvent, hint: EventHint): ErrorEvent | null {
+  beforeSend(event: any): any {
       // Remove file paths if accidentally present
       if (event.breadcrumbs) {
   event.breadcrumbs = event.breadcrumbs.map((b: Breadcrumb) => {

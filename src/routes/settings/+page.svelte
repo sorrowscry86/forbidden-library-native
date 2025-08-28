@@ -24,7 +24,7 @@
             
             if (environment === 'tauri') {
                 const config = await invokeWithTimeout('get_api_config', { provider: selectedProvider }, ms(8));
-                if (config) {
+                if (config && config.length > 0) {
                     apiKey = config[0] || '';
                 }
             }
@@ -50,7 +50,7 @@
             }
         } catch (error) {
             console.error('Failed to save settings:', error);
-            alert('Error saving settings: ' + error.message);
+            alert('Error saving settings: ' + error);
         }
     }
     
