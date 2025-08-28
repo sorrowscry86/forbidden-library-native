@@ -36,9 +36,9 @@
 			messages = await invokeWithTimeout<Message[]>('get_messages', { conversation_id: conversation.id }, ms(8));
 		} catch (error) {
 			console.error('Failed to load messages:', error);
-			// In web mode, use conversation.messages if available
-			if (environment === 'web' && conversation.messages) {
-				messages = conversation.messages;
+			// In web mode, initialize with empty messages array
+			if (environment === 'web') {
+				messages = [];
 			}
 		} finally {
 			loading = false;
@@ -85,7 +85,7 @@
 
 		} catch (error) {
 			console.error('Failed to send message:', error);
-			
+
 			// In web mode, create a demo response
 			if (environment === 'web') {
 				const demoResponse: Message = {
@@ -127,13 +127,13 @@
 
 	    async function exportConversation() {
         if (!conversation?.id) return;
-        
+
         try {
             const result = await invokeWithTimeout('export_conversation', {
                 conversation_id: conversation.id,
                 format: 'json'
             }, ms(10));
-            
+
             console.log('Conversation exported:', result);
             // Add UI feedback here
         } catch (error) {
@@ -144,7 +144,7 @@
 
     async function archiveConversation(id: number) {
         if (!id) return;
-        
+
         try {
             await invokeWithTimeout('archive_conversation', {
                 id,
@@ -214,7 +214,7 @@ function handleKeyPress(event: KeyboardEvent) {
 				</div>
 				<p class="text-lg font-medium mb-2">Start the conversation</p>
 				<p class="text-sm text-gray-500">Send a message to begin chatting</p>
-				
+
 				{#if environment === 'web'}
 					<div class="mt-4 bg-gray-700 rounded-lg p-3 max-w-sm text-center">
 						<p class="text-xs text-gray-300">
@@ -272,7 +272,7 @@ function handleKeyPress(event: KeyboardEvent) {
 				</svg>
 			</button>
 		</div>
-		
+
 		{#if environment === 'web'}
 			<div class="mt-2 text-xs text-gray-400 text-center">
 				🌐 Web mode: Messages are demo only. Install desktop app for full functionality.

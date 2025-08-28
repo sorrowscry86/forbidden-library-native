@@ -281,7 +281,7 @@ export async function invokeWithSchemaValidation<T>(
   if (validationResult !== true) {
     throw new AppError({
       message: 'Validation failed',
-      details: validationResult,
+      details: typeof validationResult === 'string' ? validationResult : 'Validation failed',
       category: ErrorCategory.VALIDATION,
       severity: ErrorSeverity.WARNING,
       context: { command, args, schema }
@@ -369,7 +369,7 @@ export async function invokeWithIntelligentRetry<T>(
   config: Partial<RetryConfig> = {}
 ): Promise<T> {
   const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...config };
-  let lastError: AppError | Error;
+  let lastError: AppError | Error = new Error('No attempts made');
   let attempt = 0;
 
   while (attempt <= retryConfig.maxRetries) {
