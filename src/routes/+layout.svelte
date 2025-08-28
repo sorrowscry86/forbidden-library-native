@@ -1,16 +1,20 @@
-﻿<script>
+<script>
 import '../app.css';
 import { onMount } from 'svelte';
-import { invokeWithTimeout, ms } from '/services/api';
-import { page } from '/stores';
+import { page } from '$app/stores';
+import { safeInvoke, isTauriAvailable } from '$lib/utils/enhanced-tauri-detection';
 
 let appInfo = { name: '', version: '' };
+let isDesktop = false;
 
 onMount(async () => {
+    isDesktop = isTauriAvailable();
+    
     try {
-        appInfo = await invokeWithTimeout('get_app_version', undefined, ms(5));
+        appInfo = await safeInvoke('get_app_version');
     } catch (error) {
         console.error('Failed to get app version:', error);
+        appInfo = { name: 'Forbidden Library', version: '2.0.0' };
     }
 });
 </script>
@@ -33,19 +37,28 @@ onMount(async () => {
                 <nav class="flex items-center space-x-6 mr-6">
                     <a 
                         href="/" 
-                        class="text-sm font-medium {.url.pathname === '/' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
+                        class="text-sm font-medium {$page.url.pathname === '/' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
                     >
                         Conversations
                     </a>
                     <a 
                         href="/planning" 
-                        class="text-sm font-medium {.url.pathname === '/planning' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
+                        class="text-sm font-medium {$page.url.pathname === '/planning' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
                     >
                         Planning
                     </a>
+                    {#if isDesktop}
+                        <a 
+                            href="/desktop" 
+                            class="text-sm font-medium {$page.url.pathname === '/desktop' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors flex items-center space-x-1"
+                        >
+                            <span>🖥️</span>
+                            <span>Desktop</span>
+                        </a>
+                    {/if}
                     <a 
                         href="/settings" 
-                        class="text-sm font-medium {.url.pathname === '/settings' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
+                        class="text-sm font-medium {$page.url.pathname === '/settings' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
                     >
                         Settings
                     </a>
