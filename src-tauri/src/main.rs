@@ -140,6 +140,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // Monitoring and testing commands
             commands::test_sentry,
+
+            // Desktop-specific commands
+            commands::get_system_info,
+            commands::show_open_dialog,
+            commands::show_save_dialog,
+            commands::write_file_to_disk,
+            commands::read_file_from_disk,
+            commands::show_notification,
+            commands::copy_to_clipboard,
+            commands::read_from_clipboard,
+            commands::get_app_data_dir,
+            commands::open_external_url,
+            commands::create_desktop_shortcut,
+            commands::is_dark_mode,
+            commands::get_window_state,
+            commands::set_window_always_on_top,
+            commands::minimize_to_tray,
+            commands::check_for_updates,
         ])
         .run(tauri::generate_context!());
 

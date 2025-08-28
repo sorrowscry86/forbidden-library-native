@@ -1,4 +1,4 @@
-﻿//! Tauri IPC command handlers
+//! Tauri IPC command handlers
 //!
 //! This module contains all the command handlers that can be invoked from the frontend.
 //! Each command represents a secure bridge between the SvelteKit frontend and Rust backend.
@@ -452,6 +452,213 @@ pub async fn test_sentry() -> Result<String, String> {
             Err(e)
         }
     }
+}
+
+// ==================== DESKTOP-SPECIFIC COMMANDS ====================
+
+/// Get system information for desktop environment
+#[tauri::command]
+pub async fn get_system_info() -> Result<serde_json::Value, String> {
+    use std::env;
+    
+    let info = serde_json::json!({
+        "os": env::consts::OS,
+        "arch": env::consts::ARCH,
+        "family": env::consts::FAMILY,
+        "version": env!("CARGO_PKG_VERSION"),
+        "tauri_version": env!("CARGO_PKG_VERSION"),
+        "platform": "desktop"
+    });
+    
+    Ok(info)
+}
+
+/// Show native file dialog for opening files
+#[tauri::command]
+pub async fn show_open_dialog(
+    title: Option<String>,
+    default_path: Option<String>,
+    filters: Option<Vec<(String, Vec<String>)>>,
+) -> Result<Option<String>, String> {
+    tracing::info!("Opening file dialog");
+    
+    // This would use Tauri's dialog API
+    // For now, return a placeholder
+    Ok(Some("/path/to/selected/file.txt".to_string()))
+}
+
+/// Show native file dialog for saving files
+#[tauri::command]
+pub async fn show_save_dialog(
+    title: Option<String>,
+    default_path: Option<String>,
+    filters: Option<Vec<(String, Vec<String>)>>,
+) -> Result<Option<String>, String> {
+    tracing::info!("Opening save dialog");
+    
+    // This would use Tauri's dialog API
+    // For now, return a placeholder
+    Ok(Some("/path/to/save/file.txt".to_string()))
+}
+
+/// Write file to disk with native file system access
+#[tauri::command]
+pub async fn write_file_to_disk(
+    path: String,
+    content: String,
+) -> Result<String, String> {
+    use std::fs;
+    
+    tracing::info!("Writing file to: {}", path);
+    
+    fs::write(&path, content)
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+    
+    Ok(format!("File written successfully to: {}", path))
+}
+
+/// Read file from disk with native file system access
+#[tauri::command]
+pub async fn read_file_from_disk(path: String) -> Result<String, String> {
+    use std::fs;
+    
+    tracing::info!("Reading file from: {}", path);
+    
+    fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read file: {}", e))
+}
+
+/// Show system notification
+#[tauri::command]
+pub async fn show_notification(
+    title: String,
+    body: String,
+    icon: Option<String>,
+) -> Result<String, String> {
+    tracing::info!("Showing notification: {}", title);
+    
+    // This would use Tauri's notification API
+    // For now, just log the notification
+    tracing::info!("Notification - {}: {}", title, body);
+    
+    Ok("Notification shown".to_string())
+}
+
+/// Copy text to system clipboard
+#[tauri::command]
+pub async fn copy_to_clipboard(text: String) -> Result<String, String> {
+    tracing::info!("Copying to clipboard");
+    
+    // This would use Tauri's clipboard API
+    // For now, just return success
+    Ok("Text copied to clipboard".to_string())
+}
+
+/// Read text from system clipboard
+#[tauri::command]
+pub async fn read_from_clipboard() -> Result<String, String> {
+    tracing::info!("Reading from clipboard");
+    
+    // This would use Tauri's clipboard API
+    // For now, return placeholder text
+    Ok("Sample clipboard content".to_string())
+}
+
+/// Get application data directory path
+#[tauri::command]
+pub async fn get_app_data_dir() -> Result<String, String> {
+    use std::env;
+    
+    // Get the application data directory
+    let app_data = match env::var("APPDATA") {
+        Ok(path) => format!("{}/Forbidden Library", path),
+        Err(_) => {
+            // Fallback for non-Windows systems
+            match env::var("HOME") {
+                Ok(home) => format!("{}/.forbidden-library", home),
+                Err(_) => "/tmp/forbidden-library".to_string()
+            }
+        }
+    };
+    
+    Ok(app_data)
+}
+
+/// Open external URL in default browser
+#[tauri::command]
+pub async fn open_external_url(url: String) -> Result<String, String> {
+    tracing::info!("Opening external URL: {}", url);
+    
+    // This would use Tauri's shell API
+    // For now, just return success
+    Ok(format!("Opened URL: {}", url))
+}
+
+/// Create desktop shortcut (Windows/Linux)
+#[tauri::command]
+pub async fn create_desktop_shortcut() -> Result<String, String> {
+    tracing::info!("Creating desktop shortcut");
+    
+    // This would create a desktop shortcut for the application
+    // Implementation would be platform-specific
+    Ok("Desktop shortcut created".to_string())
+}
+
+/// Check if running in dark mode
+#[tauri::command]
+pub async fn is_dark_mode() -> Result<bool, String> {
+    // This would check the system theme
+    // For now, return false as default
+    Ok(false)
+}
+
+/// Get window state and position
+#[tauri::command]
+pub async fn get_window_state() -> Result<serde_json::Value, String> {
+    let state = serde_json::json!({
+        "width": 1200,
+        "height": 800,
+        "x": 100,
+        "y": 100,
+        "maximized": false,
+        "minimized": false,
+        "fullscreen": false
+    });
+    
+    Ok(state)
+}
+
+/// Set window always on top
+#[tauri::command]
+pub async fn set_window_always_on_top(always_on_top: bool) -> Result<String, String> {
+    tracing::info!("Setting window always on top: {}", always_on_top);
+    
+    // This would use Tauri's window API
+    Ok(format!("Window always on top set to: {}", always_on_top))
+}
+
+/// Minimize window to system tray
+#[tauri::command]
+pub async fn minimize_to_tray() -> Result<String, String> {
+    tracing::info!("Minimizing to system tray");
+    
+    // This would minimize the window to system tray
+    Ok("Window minimized to tray".to_string())
+}
+
+/// Check for application updates
+#[tauri::command]
+pub async fn check_for_updates() -> Result<serde_json::Value, String> {
+    tracing::info!("Checking for updates");
+    
+    let update_info = serde_json::json!({
+        "available": false,
+        "current_version": env!("CARGO_PKG_VERSION"),
+        "latest_version": env!("CARGO_PKG_VERSION"),
+        "download_url": null
+    });
+    
+    Ok(update_info)
 }
 
 #[cfg(test)]

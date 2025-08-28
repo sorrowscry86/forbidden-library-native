@@ -39,8 +39,9 @@
     "format": "prettier --write .",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-  "tauri:build": "tauri build",\n  "tauri:preview": "tauri build --debug && tauri dev --no-watch",
-  "version:bump": "node scripts/bump-version.mjs",
+    "tauri:build": "tauri build",
+    "tauri:preview": "tauri build --debug && tauri dev --no-watch",
+    "version:bump": "node scripts/bump-version.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"

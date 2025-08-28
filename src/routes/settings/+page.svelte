@@ -1,7 +1,7 @@
-﻿<script lang="ts">
+<script lang="ts">
     import { onMount } from 'svelte';
-    import { invokeWithTimeout, ms } from '/services/api';
-    import { getEnvironment } from '/utils/tauri-detection';
+    import { invokeWithTimeout, ms } from '$lib/services/api';
+    import { getEnvironment } from '$lib/utils/tauri-detection';
     
     let loading = true;
     let environment = getEnvironment();
@@ -50,7 +50,7 @@
             }
         } catch (error) {
             console.error('Failed to save settings:', error);
-            alert(Error saving settings: );
+            alert('Error saving settings: ' + error);
         }
     }
     
