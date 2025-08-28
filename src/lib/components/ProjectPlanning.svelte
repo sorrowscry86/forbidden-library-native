@@ -1,7 +1,7 @@
 ﻿<script lang="ts">
     import { onMount } from 'svelte';
-    import { invokeWithTimeout, ms } from '/services/api';
-    import type { Project, ProjectMilestone } from '/types/models';
+    import { invokeWithTimeout, ms } from '$lib/services/api';
+    import type { Project, ProjectMilestone } from '$lib/types/models';
     
     let projects: Project[] = [];
     let loading = true;

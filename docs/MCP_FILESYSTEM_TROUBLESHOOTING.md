@@ -390,3 +390,4 @@ When troubleshooting fails:
 6. Report issues with full context
 
 This troubleshooting guide should help resolve most common issues encountered when using the filesystem-with-morph MCP tools. Always start with the diagnostic workflow and follow the error recovery strategies for the best results.
+

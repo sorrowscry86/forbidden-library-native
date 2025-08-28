@@ -119,9 +119,9 @@
 {#if environment === 'web'}
 	<div class="bg-yellow-600 text-white px-4 py-2 text-center text-sm">
 		🌐 Web Mode - Running in browser.
-		<a href="#" class="underline ml-2" onclick="alert('To access full features, run: pnpm run tauri:dev')">
+		<button type="button" class="underline ml-2 bg-transparent border-none text-white cursor-pointer" onclick="alert('To access full features, run: pnpm run tauri:dev')">
 			Install Desktop App
-		</a>
+		</button>
 	</div>
 {/if}
 

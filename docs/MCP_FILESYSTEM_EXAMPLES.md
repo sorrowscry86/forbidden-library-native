@@ -293,3 +293,4 @@
 ```
 
 These examples demonstrate practical, real-world usage patterns for the filesystem-with-morph MCP tools. Each example shows how to combine multiple tools to accomplish complex tasks while following best practices for security, performance, and error handling.
+

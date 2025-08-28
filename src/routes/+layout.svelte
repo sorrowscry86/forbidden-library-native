@@ -1,8 +1,8 @@
 ﻿<script>
 import '../app.css';
 import { onMount } from 'svelte';
-import { invokeWithTimeout, ms } from '/services/api';
-import { page } from '/stores';
+import { invokeWithTimeout, ms } from '$lib/services/api';
+import { page } from '$app/stores';
 
 let appInfo = { name: '', version: '' };
 
@@ -33,19 +33,19 @@ onMount(async () => {
                 <nav class="flex items-center space-x-6 mr-6">
                     <a 
                         href="/" 
-                        class="text-sm font-medium {.url.pathname === '/' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
+                        class="text-sm font-medium {$page.url.pathname === '/' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
                     >
                         Conversations
                     </a>
                     <a 
                         href="/planning" 
-                        class="text-sm font-medium {.url.pathname === '/planning' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
+                        class="text-sm font-medium {$page.url.pathname === '/planning' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
                     >
                         Planning
                     </a>
                     <a 
                         href="/settings" 
-                        class="text-sm font-medium {.url.pathname === '/settings' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
+                        class="text-sm font-medium {$page.url.pathname === '/settings' ? 'text-white' : 'text-gray-400 hover:text-white'} transition-colors"
                     >
                         Settings
                     </a>

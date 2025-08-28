@@ -39,8 +39,9 @@
     "format": "prettier --write .",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-  "tauri:build": "tauri build",\n  "tauri:preview": "tauri build --debug && tauri dev --no-watch",
-  "version:bump": "node scripts/bump-version.mjs",
+    "tauri:build": "tauri build",
+    "tauri:preview": "tauri build --debug && tauri dev --no-watch",
+    "version:bump": "node scripts/bump-version.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
@@ -74,7 +75,8 @@
     "marked": "^11.1.1",
     "katex": "^0.16.9",
     "highlight.js": "^11.9.0",
-    "lucide-svelte": "^0.303.0"
+    "lucide-svelte": "^0.303.0",
+    "@sentry/sveltekit": "^8.20.0"
   },
   "engines": {
     "node": ">=18.0.0",

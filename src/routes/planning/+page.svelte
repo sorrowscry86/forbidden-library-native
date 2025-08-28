@@ -1,5 +1,5 @@
 ﻿<script lang="ts">
-    import ProjectPlanning from '/components/ProjectPlanning.svelte';
+    import ProjectPlanning from '$lib/components/ProjectPlanning.svelte';
 </script>
 
 <div class="h-full">
