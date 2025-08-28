@@ -60,7 +60,6 @@
         "setAlwaysOnTop": true,
         "center": true,
         "requestUserAttention": true,
-        "setResizable": true,
         "print": true
       },
       "shell": {
