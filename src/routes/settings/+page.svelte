@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
     import { onMount } from 'svelte';
     import { invokeWithTimeout, ms } from '$lib/services/api';
     import { getEnvironment } from '$lib/utils/tauri-detection';

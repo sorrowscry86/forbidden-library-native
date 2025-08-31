@@ -1,4 +1,4 @@
-﻿//! Tauri IPC command handlers
+//! Tauri IPC command handlers
 //!
 //! This module contains all the command handlers that can be invoked from the frontend.
 //! Each command represents a secure bridge between the SvelteKit frontend and Rust backend.
