@@ -60,29 +60,34 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 8
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
-        cache: 'npm'
+        node-version: '20'
+        cache: 'pnpm'
 
     - name: Install dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Check TypeScript
-      run: npm run check
+      run: pnpm run check
 
     - name: Run ESLint
-      run: npm run lint
+      run: pnpm run lint
 
     - name: Check Prettier formatting
-      run: npx prettier --check .
+      run: pnpm prettier --check .
 
     - name: Build SvelteKit frontend
-      run: npm run build
+      run: pnpm run build
 
     - name: Run frontend tests
-      run: npm test
+      run: pnpm test
 
   tauri_build:
     name: Tauri Application Build Test
@@ -97,17 +102,25 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 8
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
-        cache: 'npm'
+        node-version: '20'
+        cache: 'pnpm'
 
     - name: Install Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         override: true
+
+    - name: Install Tauri CLI
+      run: cargo install tauri-cli --version "^1.0"
 
     - name: Install system dependencies (Ubuntu)
       if: matrix.platform == 'ubuntu-20.04'
@@ -127,10 +140,10 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Install frontend dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Build Tauri application (dev mode)
-      run: npm run tauri build -- --debug
+      run: pnpm tauri build --debug
       env:
         TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
         TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
@@ -156,4 +169,4 @@ jobs:
       run: cargo audit
 
     - name: Run npm audit
-      run: npm audit --audit-level high
+      run: pnpm audit --audit-level high
