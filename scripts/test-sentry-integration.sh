@@ -37,7 +37,7 @@ fi
 
 # Test 3: Check source maps generation
 echo "🔍 Test 3: Source Maps Generation"
-if [[ -f "build/_app/immutable/entry/app.*.js.map" ]]; then
+if find build/_app/immutable/entry/ -name "*.js.map" -type f | head -1 | grep -q "."; then
     echo "✅ Source maps generated"
 else
     echo "❌ Source maps not found"

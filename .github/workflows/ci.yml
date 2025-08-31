@@ -89,6 +89,9 @@ jobs:
     - name: Run frontend tests
       run: pnpm test
 
+    - name: Validate Sentry Integration
+      run: ./scripts/test-sentry-integration.sh dev
+
   tauri_build:
     name: Tauri Application Build Test
     runs-on: ${{ matrix.platform }}
