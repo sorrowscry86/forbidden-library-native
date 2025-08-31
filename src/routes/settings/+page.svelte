@@ -2,11 +2,14 @@
     import { onMount } from 'svelte';
     import { invokeWithTimeout, ms } from '$lib/services/api';
     import { getEnvironment } from '$lib/utils/tauri-detection';
+    import { settings, type Settings } from '$lib/stores/settings';
+    import { get } from 'svelte/store';
     
     let loading = true;
     let environment = getEnvironment();
     let apiKey = '';
     let selectedProvider = 'openai';
+    let currentSettings: Settings;
     let providers = [
         { id: 'openai', name: 'OpenAI' },
         { id: 'anthropic', name: 'Anthropic' },
@@ -14,7 +17,15 @@
         { id: 'local', name: 'Local Model' }
     ];
     
+    // Subscribe to settings store
+    settings.subscribe(value => {
+        currentSettings = value;
+        selectedProvider = value.apiProvider;
+    });
+    
     onMount(async () => {
+        // Initialize settings store
+        settings.init();
         await loadSettings();
     });
     
@@ -22,10 +33,16 @@
         try {
             loading = true;
             
+            // Load settings from store
+            const stored = settings.load();
+            selectedProvider = stored.apiProvider;
+            
             if (environment === 'tauri') {
                 const config = await invokeWithTimeout('get_api_config', { provider: selectedProvider }, ms(8));
-                if (config) {
+                if (config && typeof config === 'object' && Array.isArray(config)) {
                     apiKey = config[0] || '';
+                } else if (config && typeof config === 'string') {
+                    apiKey = config;
                 }
             }
         } catch (error) {
@@ -44,6 +61,10 @@
                     base_url: null
                 }, ms(8));
                 
+                // Update settings store
+                settings.updateSetting('apiProvider', selectedProvider);
+                settings.updateSetting('apiKey', apiKey);
+                
                 alert('Settings saved successfully');
             } else {
                 alert('Settings cannot be saved in web mode');
@@ -56,6 +77,16 @@
     
     function handleProviderChange() {
         loadSettings();
+    }
+    
+    function handleTelemetryToggle(enabled: boolean) {
+        settings.updateSetting('telemetryEnabled', enabled);
+        
+        if (enabled) {
+            alert('Telemetry enabled. The app will send anonymized error reports and performance data to help improve the experience. Reload the app to apply changes.');
+        } else {
+            alert('Telemetry disabled. No data will be sent. Reload the app to apply changes.');
+        }
     }
 </script>
 
@@ -118,6 +149,49 @@
                     </p>
                 </div>
             {/if}
+        </div>
+        
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-white mb-4">Privacy & Telemetry</h2>
+            
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3">
+                    <input
+                        type="checkbox"
+                        id="telemetry"
+                        checked={currentSettings?.telemetryEnabled || false}
+                        on:change={(e) => handleTelemetryToggle(e.currentTarget.checked)}
+                        class="mt-1 h-4 w-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-600 focus:ring-2"
+                    />
+                    <div class="flex-1">
+                        <label for="telemetry" class="text-sm font-medium text-white cursor-pointer">
+                            Enable Telemetry & Error Reporting
+                        </label>
+                        <p class="text-sm text-gray-400 mt-1">
+                            Send anonymized error reports and performance data to help improve the application. 
+                            No personal data, API keys, or file contents are ever transmitted. 
+                            <a href="/privacy" class="text-purple-400 hover:text-purple-300 underline">Learn more</a>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-700 rounded-lg p-3">
+                    <h3 class="text-sm font-semibold text-gray-300 mb-2">What data is collected when enabled:</h3>
+                    <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                        <li>Application crashes and error stack traces</li>
+                        <li>Performance metrics (load times, memory usage)</li>
+                        <li>Feature usage statistics (anonymized)</li>
+                        <li>Operating system and hardware information</li>
+                    </ul>
+                    <h3 class="text-sm font-semibold text-gray-300 mb-2 mt-3">What is never collected:</h3>
+                    <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                        <li>API keys or authentication credentials</li>
+                        <li>Chat messages or conversation content</li>
+                        <li>File paths or personal file information</li>
+                        <li>Personally identifiable information</li>
+                    </ul>
+                </div>
+            </div>
         </div>
         
         <div class="bg-gray-800 rounded-lg p-6">

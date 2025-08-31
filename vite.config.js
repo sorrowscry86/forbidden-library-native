@@ -23,8 +23,8 @@ export default defineConfig(async () => ({
     target: process.env.TAURI_PLATFORM == "windows" ? "chrome105" : "safari13",
     // don't minify for debug builds
     minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
-    // produce sourcemaps for debug builds
-    sourcemap: !!process.env.TAURI_DEBUG,
+    // produce sourcemaps for debug builds and releases (for Sentry)
+    sourcemap: !!(process.env.TAURI_DEBUG || process.env.SENTRY_AUTH_TOKEN || process.env.NODE_ENV === 'development'),
   },
 
   // Environment variables available to the frontend
