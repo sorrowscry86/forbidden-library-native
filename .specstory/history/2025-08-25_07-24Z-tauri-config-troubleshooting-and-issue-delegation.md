@@ -222,6 +222,167 @@ I forgot we haven't established a repo for this version yet. Go ahead and make a
 
 _**Assistant**_
 
+I’ll check whether this folder is already a Git repository, then initialize it if needed and add a proper .gitignore for Rust/Tauri/SvelteKit; after committing, I’ll provide exact commands for creating the GitHub remote and pushing. I’ll initialize and make an initial commit locally, set the default branch to main, then give you exact commands to create a GitHub remote and push. I’ll initialize and publish this folder as a new Git repository, then wire the remote so you can push to GitHub.
+
+## Checklist
+- Initialize local Git repo and make first commit.
+- Create GitHub repository (name: `forbidden-library-native` per `package.json`).
+- Add `origin` remote and push `main`.
+- Confirm CI triggers on push.
+
+Local repo is initialized and committed. Next, create the GitHub repo and push using one of the options below.
+
+## Option A: GitHub CLI (fastest)
+PowerShell:
+```powershell
+# From D:\Clones\GitHub\TechData\ForbiddenLibraryRework
+gh repo create sorrowscry86/forbidden-library-native --private --source . --remote origin --push
+```
+
+## Option B: Create repo in the web UI, then connect locally
+1) Create the repository at:
+- https://github.com/new (Owner: `sorrowscry86`, Name: `forbidden-library-native`, Private or Public as you prefer)
+
+2) Add remote and push (choose SSH or HTTPS).
+
+SSH:
+```powershell
+git remote add origin git@github.com:sorrowscry86/forbidden-library-native.git
+git push -u origin main
+```
+
+HTTPS (will prompt for credentials/PAT):
+```powershell
+git remote add origin https://github.com/sorrowscry86/forbidden-library-native.git
+git push -u origin main
+```
+
+Notes:
+- Default branch is already set to `main`.
+- CI workflows (`.github/workflows/*.yml`) are present and will run after the first push.
+
+What I need you to do now:
+- Either run the GitHub CLI command (Option A), or create the repo via the web and then run the two `git remote add` + `git push` commands (Option B).
+- Tell me which option you used (SSH or HTTPS) so I can proceed with any follow-up (e.g., badges, Releases link).
+
+---
+
+_**User**_
+
+use cli and GitHub MCP
+
+---
+
+_**Assistant**_
+
+I’ll create the GitHub repository via the GitHub integration, then provide exact PowerShell CLI commands to add the remote and push your local `main` branch. Repo created. I’ll wire your local folder to the new GitHub repo and push main.
+
+Do this in PowerShell:
+
+- Add remote and push (choose one URL style):
+
+SSH:
+```powershell
+git remote add origin git@github.com:sorrowscry86/forbidden-library-native.git
+git push -u origin main
+```
+
+HTTPS:
+```powershell
+git remote add origin https://github.com/sorrowscry86/forbidden-library-native.git
+git push -u origin main
+```
+
+- Optional: Verify remote
+```powershell
+git remote -v
+```
+
+What I need you to do next:
+- Run either the SSH or HTTPS pair of commands above to push `main`.
+- Reply with which one you used (SSH or HTTPS) so I can proceed to set badges/links and confirm CI triggers on the repo.
+
+---
+
+_**User**_
+
+HTTPS
+
+---
+
+_**Assistant**_
+
+To connect your local repo to the new GitHub remote and push `main`, I’ll check the current remotes, add the HTTPS remote if needed, push `main`, and then verify on GitHub that the branch and commit arrived. To switch your repo to HTTPS and push `main`, I’ll set the `origin` remote to the HTTPS URL, push the branch, and show simple checks to verify everything.
+
+Plan:
+- Check the current repo/branch.
+- Configure `origin` to HTTPS (add or update).
+- Push `main` and set upstream.
+- Verify the remote and latest commit on GitHub.
+
+Commands (PowerShell, copy/paste one per line):
+
+1) Navigate and verify repo/branch
+```powershell
+cd "d:\Clones\GitHub\TechData\ForbiddenLibraryRework"
+git status
+git branch --show-current
+```
+
+2) Set HTTPS remote (choose one of the following, depending on whether `origin` exists)
+
+- If `origin` does NOT exist:
+```powershell
+git remote add origin https://github.com/sorrowscry86/forbidden-library-native.git
+```
+
+- If `origin` already exists (update it to HTTPS):
+```powershell
+git remote set-url origin https://github.com/sorrowscry86/forbidden-library-native.git
+```
+
+3) Push `main` to GitHub and set upstream
+```powershell
+git push -u origin main
+```
+
+4) Quick verification
+```powershell
+git remote -v
+git ls-remote --heads origin
+```
+
+Notes:
+- Git for Windows will prompt for sign-in and securely cache your credentials via Git Credential Manager. If you use 2FA, use a Personal Access Token as the password.
+- If the remote already has the current commit, you’ll see “Everything up-to-date.” If it’s behind, the push will fast-forward the remote to your local `main`.
+- If your local branch wasn’t named `main`, rename it first:
+```powershell
+git branch -m main
+```
+
+Completion summary:
+- Provided HTTPS remote URL and safe commands to add/update `origin`.
+- Included push and verification steps.
+- No code changes were made; no Codacy analysis required.
+
+How to run:
+- Paste the commands into your PowerShell terminal in VS Code or Windows Terminal.
+- After the push, you can confirm on GitHub at: `https://github.com/sorrowscry86/forbidden-library-native`
+
+---
+
+_**User**_
+
+Configure this to use with Zencoder:     },
+        "linear": {
+            "url": "https://mcp.linear.app/sse",
+            "type": "http"
+        },
+
+---
+
+_**Assistant**_
+
 
 
 ---

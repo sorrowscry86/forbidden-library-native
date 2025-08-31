@@ -1,0 +1,19 @@
+{
+  "excludePaths": [
+    "build/",
+    "dist/",
+    "target/",
+    "node_modules/",
+    "static/"
+  ],
+  "tools": [
+    { "name": "trivy", "enabled": false },
+    { "name": "eslint", "enabled": true },
+    { "name": "pylint", "enabled": false },
+    { "name": "bandit", "enabled": false },
+    { "name": "cppcheck", "enabled": false },
+    { "name": "clang-tidy", "enabled": false },
+    { "name": "gosec", "enabled": false },
+    { "name": "rubocop", "enabled": false }
+  ]
+}

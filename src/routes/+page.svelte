@@ -133,7 +133,8 @@
 {#if environment === 'web'}
 	<div class="bg-yellow-600 text-white px-4 py-2 text-center text-sm">
 		🌐 Web Mode - Running in browser.
-		<button class="underline ml-2" on:click={() => alert('To access full features, run: pnpm run tauri:dev')}>
+		<button class="underline ml-2" on:click={() => alert('To access full features, run: pnpm run tauri:dev')}>>
+
 			Install Desktop App
 		</button>
 	</div>
@@ -214,7 +215,7 @@
 							</p>
 							<button
 								class="text-purple-400 hover:text-purple-300 text-sm underline"
-								onclick="alert('Run: pnpm run tauri:dev')"
+								on:click={() => alert('Run: pnpm run tauri:dev')}
 							>
 								How to install desktop app
 							</button>

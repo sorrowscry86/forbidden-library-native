@@ -1,7 +1,9 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
-export default defineConfig(async () => ({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  return ({
   plugins: [sveltekit()],
 
   // Vite options tailored for Tauri development
@@ -30,9 +32,14 @@ export default defineConfig(async () => ({
   // Environment variables available to the frontend
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+    __SENTRY_DSN__: JSON.stringify(env.SENTRY_DSN || ''),
+    __SENTRY_TRACES_SAMPLE_RATE__: JSON.stringify(env.SENTRY_TRACES_SAMPLE_RATE || '0'),
+    __SENTRY_PROFILES_SAMPLE_RATE__: JSON.stringify(env.SENTRY_PROFILES_SAMPLE_RATE || '0'),
+    __APP_ENV__: JSON.stringify(env.NODE_ENV || process.env.NODE_ENV || 'development')
   },
 
   test: {
     include: ['src/**/*.{test,spec}.{js,ts}']
   }
-}));
+});
+});

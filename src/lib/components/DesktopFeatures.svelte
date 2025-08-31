@@ -40,8 +40,8 @@
 			errorStore.addError({
 				message: 'Failed to load desktop information',
 				details: error instanceof Error ? error.message : String(error),
-				category: 'api',
-				severity: 'warning'
+				category: 'API' as any,
+				severity: 'WARNING' as any
 			});
 		} finally {
 			loading = false;
