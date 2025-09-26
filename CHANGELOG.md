@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Initial project structure with Tauri and SvelteKit
 - Basic conversation UI with markdown rendering
 - Local database integration with SQLite/SQLCipher
@@ -23,12 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
 - Implemented secure database encryption with SQLCipher
 - Added strict CSP policies in Tauri configuration
 
 ## [2.0.0] - 2025-08-22
 
 ### Added
+
 - Complete rewrite using Rust/Tauri for backend and SvelteKit for frontend
 - Privacy-first architecture with local-only processing
 - Rich text rendering with Markdown, LaTeX, and syntax highlighting
@@ -40,11 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global shortcuts
 
 ### Changed
+
 - Migrated from Electron to Tauri for improved performance and security
 - Switched from React to SvelteKit for frontend
 - Improved conversation management with thread organization
 
 ### Security
+
 - Implemented end-to-end encryption for all stored data
 - Added comprehensive permission system for file access
 - Integrated Sentry for privacy-respecting error reporting

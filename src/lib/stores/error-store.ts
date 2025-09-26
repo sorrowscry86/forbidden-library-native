@@ -15,7 +15,7 @@ export interface ErrorStoreState {
 function createErrorStore() {
   const { subscribe, update, set }: Writable<ErrorStoreState> = writable({
     errors: [],
-    lastError: null
+    lastError: null,
   });
 
   let cleanupInterval: ReturnType<typeof setInterval> | null = null;
@@ -27,20 +27,18 @@ function createErrorStore() {
      * Add a new error to the store
      */
     addError: (errorOptions: AppErrorOptions | AppError) => {
-      const error = errorOptions instanceof AppError
-        ? errorOptions
-        : new AppError(errorOptions);
+      const error = errorOptions instanceof AppError ? errorOptions : new AppError(errorOptions);
 
-      update(state => ({
+      update((state) => ({
         errors: [error, ...state.errors],
-        lastError: error
+        lastError: error,
       }));
 
       // Log error for debugging
       console.error(`[${error.category}] ${error.message}`, {
         details: error.details,
         context: error.context,
-        originalError: error.originalError
+        originalError: error.originalError,
       });
 
       return error;
@@ -50,11 +48,11 @@ function createErrorStore() {
      * Remove a specific error by ID
      */
     dismissError: (errorId: string) => {
-      update(state => {
-        const updatedErrors = state.errors.filter(error => error.id !== errorId);
+      update((state) => {
+        const updatedErrors = state.errors.filter((error) => error.id !== errorId);
         return {
           errors: updatedErrors,
-          lastError: updatedErrors[0] || null
+          lastError: updatedErrors[0] || null,
         };
       });
     },
@@ -63,8 +61,8 @@ function createErrorStore() {
      * Mark an error as handled
      */
     markErrorAsHandled: (errorId: string) => {
-      update(state => {
-        const error = state.errors.find(e => e.id === errorId);
+      update((state) => {
+        const error = state.errors.find((e) => e.id === errorId);
         if (error) {
           error.markAsHandled();
         }
@@ -83,11 +81,11 @@ function createErrorStore() {
      * Clear errors by category
      */
     clearErrorsByCategory: (category: ErrorCategory) => {
-      update(state => {
-        const filteredErrors = state.errors.filter(error => error.category !== category);
+      update((state) => {
+        const filteredErrors = state.errors.filter((error) => error.category !== category);
         return {
           errors: filteredErrors,
-          lastError: filteredErrors[0] || null
+          lastError: filteredErrors[0] || null,
         };
       });
     },
@@ -97,8 +95,8 @@ function createErrorStore() {
      */
     getErrorsBySeverity: (severity: ErrorSeverity): AppError[] => {
       let errors: AppError[] = [];
-      update(state => {
-        errors = state.errors.filter(error => error.severity === severity);
+      update((state) => {
+        errors = state.errors.filter((error) => error.severity === severity);
         return state;
       });
       return errors;
@@ -107,21 +105,22 @@ function createErrorStore() {
     /**
      * Initialize the error store with cleanup
      */
-    init: (maxErrors = 100, maxAgeMs = 3600000) => { // 1 hour default
+    init: (maxErrors = 100, maxAgeMs = 3600000) => {
+      // 1 hour default
       // Clean up old errors periodically
       cleanupInterval = setInterval(() => {
-        update(state => {
+        update((state) => {
           const now = Date.now();
           const cleanedErrors = state.errors
-            .filter(error => {
+            .filter((error) => {
               // Keep unhandled errors and recent errors
-              return !error.handled || (now - error.timestamp < maxAgeMs);
+              return !error.handled || now - error.timestamp < maxAgeMs;
             })
             .slice(0, maxErrors); // Limit total number of errors
 
           return {
             errors: cleanedErrors,
-            lastError: cleanedErrors[0] || null
+            lastError: cleanedErrors[0] || null,
           };
         });
       }, 60000); // Check every minute
@@ -144,7 +143,7 @@ function createErrorStore() {
         cleanupInterval = null;
       }
       set({ errors: [], lastError: null });
-    }
+    },
   };
 }
 
@@ -162,7 +161,7 @@ export function addTimeoutError(command: string, timeoutMs: number): AppError {
     details: `The command ${command} took longer than ${timeoutMs}ms to complete`,
     category: ErrorCategory.TIMEOUT,
     severity: ErrorSeverity.WARNING,
-    context: { command, timeoutMs }
+    context: { command, timeoutMs },
   });
 }
 
@@ -172,7 +171,7 @@ export function addNetworkError(message: string, originalError?: unknown): AppEr
     details: message,
     category: ErrorCategory.NETWORK,
     severity: ErrorSeverity.ERROR,
-    originalError
+    originalError,
   });
 }
 
@@ -182,7 +181,7 @@ export function addValidationError(message: string, context?: Record<string, unk
     details: message,
     category: ErrorCategory.VALIDATION,
     severity: ErrorSeverity.WARNING,
-    context
+    context,
   });
 }
 
@@ -193,6 +192,6 @@ export function addApiError(command: string, originalError: unknown): AppError {
     category: ErrorCategory.API,
     severity: ErrorSeverity.ERROR,
     originalError,
-    context: { command }
+    context: { command },
   });
 }

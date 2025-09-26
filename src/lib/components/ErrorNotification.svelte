@@ -7,14 +7,14 @@
   export let maxErrors = 5; // Maximum number of errors to show at once
 
   let errors: AppError[] = [];
-  let timeouts = new Map<string, number>();
+  const timeouts = new Map<string, number>();
 
   // Subscribe to error store
-  const unsubscribe = errorStore.subscribe(state => {
+  const unsubscribe = errorStore.subscribe((state) => {
     errors = state.errors.slice(0, maxErrors);
 
     // Setup auto-dismiss for new errors
-    state.errors.forEach(error => {
+    state.errors.forEach((error) => {
       if (!timeouts.has(error.id) && shouldAutoDismiss(error)) {
         setupAutoDismiss(error);
       }
@@ -23,9 +23,7 @@
 
   // Determine if error should auto-dismiss
   function shouldAutoDismiss(error: AppError): boolean {
-    return autoHideTimeout > 0 &&
-           error.severity !== ErrorSeverity.CRITICAL &&
-           error.recoverable;
+    return autoHideTimeout > 0 && error.severity !== ErrorSeverity.CRITICAL && error.recoverable;
   }
 
   // Setup auto-dismiss with race condition prevention
@@ -95,7 +93,7 @@
     if (unsubscribe) unsubscribe();
 
     // Clear all timeouts
-    timeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    timeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     timeouts.clear();
   });
 </script>
@@ -105,7 +103,9 @@
   <div class="fixed top-4 right-4 z-50 space-y-2 max-w-md">
     {#each errors as error (error.id)}
       <div
-        class="border-l-4 p-4 rounded-lg shadow-lg transition-all duration-300 ease-in-out {getSeverityClasses(error.severity)}"
+        class="border-l-4 p-4 rounded-lg shadow-lg transition-all duration-300 ease-in-out {getSeverityClasses(
+          error.severity
+        )}"
         role="alert"
         aria-live="polite"
       >
@@ -138,7 +138,12 @@
             aria-label="Dismiss error"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
             </svg>
           </button>
         </div>

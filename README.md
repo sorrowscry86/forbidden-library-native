@@ -14,7 +14,7 @@ The Forbidden Library is a revolutionary native desktop application designed as 
 ### Core Philosophy
 
 - **🔒 Privacy-Centric & Offline-First**: All data stored locally in encrypted SQLite database
-- **⚡ Performance Paramount**: Sub-second launch time, 60 FPS UI, negligible idle consumption  
+- **⚡ Performance Paramount**: Sub-second launch time, 60 FPS UI, negligible idle consumption
 - **🔗 Deep OS Integration**: Secure filesystem and shell access with explicit user consent
 - **📚 Extensible Architecture**: Modular design with MCP (Model Context Protocol) support
 - **🧠 Context Mastery**: Rich, persistent understanding of user's current work environment
@@ -39,34 +39,38 @@ The Forbidden Library is a revolutionary native desktop application designed as 
 ### Installation & Development
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/sorrowscry86/forbidden-library-native.git
    cd forbidden-library-native
    ```
 
 2. **Install dependencies**
+
    ```bash
    # Install Node.js dependencies
    pnpm install
-   
+
    # Install Rust dependencies (handled automatically by Tauri)
    ```
 
 3. **Run in development mode**
+
    ```bash
    # Start the development server
    pnpm tauri dev
-   
+
    # Alternative using cargo directly
    cargo tauri dev
    ```
 
 4. **Build for production**
+
    ```bash
    # Build the application
    pnpm tauri build
-   
-   # Alternative using cargo directly  
+
+   # Alternative using cargo directly
    cargo tauri build
    ```
 
@@ -104,6 +108,7 @@ forbidden-library-native/
 ## ✨ Key Features
 
 ### 💬 Conversational Interface
+
 - Full Markdown and LaTeX rendering
 - Advanced code block syntax highlighting
 - Multi-modal input/output support
@@ -111,22 +116,26 @@ forbidden-library-native/
 - Integrated Text-to-Speech (TTS) with ElevenLabs integration
 
 ### 🏛️ The Sanctuary (Workspace Integration)
+
 - Integrated file system explorer with secure access
 - Embedded terminal with command history
 - Contextual awareness through MCP protocol
 - Deep OS integration with explicit user consent
 
-### 🧩 Extensible Architecture  
+### 🧩 Extensible Architecture
+
 - **Grimoires**: MCP server integration for specialized capabilities
 - **Personas**: Persistent memory system for different AI personalities
 - **Workflow Builder**: Automated task sequences and templates
 
 ### 🎙️ Speech Laboratory
+
 - Real-time conversational AI with voice interaction
 - Advanced voice synthesis controls and fine-tuning
 - Audio processing tools (voice isolation, video dubbing, extraction)
 
 ### 📊 Project Management
+
 - Integrated project dashboard with status tracking
 - Task and milestone management
 - AI-powered project planning integration
@@ -184,7 +193,7 @@ We welcome contributions from the community! Please read our [Contributing Guide
 ## 📚 Documentation
 
 - [Architecture Overview](./docs/architecture.md)
-- [API Reference](./docs/api.md)  
+- [API Reference](./docs/api.md)
 - [MCP Integration Guide](./docs/mcp-integration.md)
 - [Contributing Guide](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
@@ -209,7 +218,7 @@ The Forbidden Library is designed for exceptional performance:
 ## 📞 Support & Contact
 
 - **GitHub Issues**: Report bugs or request features
-- **Discussions**: Community discussions and Q&A  
+- **Discussions**: Community discussions and Q&A
 - **Developer**: @sorrowscry86
 - **Organization**: VoidCat RDC
 - **Contact**: Wykeve Freeman (Sorrow Eternal) - SorrowsCry86@voidcat.org
@@ -223,12 +232,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Beatrice** - Project visionary and architectural lead
 - **Tauri Team** - For the exceptional desktop application framework
-- **Svelte Team** - For the performant, elegant frontend framework  
+- **Svelte Team** - For the performant, elegant frontend framework
 - **Rust Community** - For the foundation of memory-safe, high-performance computing
 
 ---
 
-*Built with ❤️ by VoidCat RDC - Excellence in software development and digital innovation*
+_Built with ❤️ by VoidCat RDC - Excellence in software development and digital innovation_
 
 ## ⬇️ Downloads
 

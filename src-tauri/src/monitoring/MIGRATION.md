@@ -15,11 +15,13 @@ This guide will help you migrate from the old monitoring module to the new, impr
 ### 1. Startup Time Tracking
 
 **Before:**
+
 ```rust
 PerformanceMonitor::track_startup_time();
 ```
 
 **After:**
+
 ```rust
 // At the very beginning of main()
 let startup_start_time = PerformanceMonitor::start_startup_tracking();
@@ -31,6 +33,7 @@ PerformanceMonitor::finish_startup_tracking(startup_start_time, None);
 ### 2. Database Operation Monitoring
 
 **Before:**
+
 ```rust
 let result = PerformanceMonitor::track_database_operation(
     "query_users",
@@ -39,6 +42,7 @@ let result = PerformanceMonitor::track_database_operation(
 ```
 
 **After:**
+
 ```rust
 let result = PerformanceMonitor::track_database_operation(
     "query_users",
@@ -66,6 +70,7 @@ match result {
 ### 3. IPC Command Monitoring
 
 **Before:**
+
 ```rust
 let result = PerformanceMonitor::track_ipc_command(
     "get_user_data",
@@ -74,6 +79,7 @@ let result = PerformanceMonitor::track_ipc_command(
 ```
 
 **After:**
+
 ```rust
 let result = PerformanceMonitor::track_ipc_command(
     "get_user_data",
@@ -101,11 +107,13 @@ match result {
 ### 4. AI Request Tracking
 
 **Before:**
+
 ```rust
 PerformanceMonitor::track_ai_request("gpt-4", Some(1024));
 ```
 
 **After:**
+
 ```rust
 // Now requires a Result parameter
 PerformanceMonitor::track_ai_request(
@@ -118,6 +126,7 @@ PerformanceMonitor::track_ai_request(
 ### 5. Performance Configuration
 
 **New Feature:**
+
 ```rust
 // Create a performance configuration
 let perf_config = PerformanceConfig::default();
@@ -140,6 +149,7 @@ PerformanceMonitor::track_database_operation(
 ## Automatic Transaction Management
 
 **New Feature:**
+
 ```rust
 // Create a scoped transaction that automatically finishes when dropped
 let transaction = scoped_transaction("custom_operation", "custom");

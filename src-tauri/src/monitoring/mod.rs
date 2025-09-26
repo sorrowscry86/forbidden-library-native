@@ -12,7 +12,6 @@ mod error_handling;
 mod tests;
 
 pub use config::PerformanceConfig;
-pub use transactions::*;
 pub use error_handling::*;
 
 use sentry::{add_breadcrumb, Breadcrumb, start_transaction, TransactionContext};

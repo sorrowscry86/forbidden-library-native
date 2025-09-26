@@ -7,12 +7,12 @@ services:
       dockerfile: Dockerfile
     container_name: forbidden-library
     ports:
-      - "8080:80"
+      - '8080:80'
     environment:
       - NODE_ENV=production
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -29,7 +29,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: forbidden-library-dev
     ports:
-      - "1430:1430"
+      - '1430:1430'
     environment:
       - NODE_ENV=development
     volumes:

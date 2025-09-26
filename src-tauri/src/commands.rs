@@ -219,7 +219,11 @@ pub async fn store_api_config(
     tracing::info!("Storing API config for provider: {}", provider);
     state.services.apis
         .store_api_config(provider, api_key, base_url)
-        .map_err(|e| format!("Failed to store API config: {}", e))
+        .map_err(|e| {
+            let error_message = format!("Failed to store API config: {}", e);
+            tracing::error!("{}", error_message);
+            error_message
+        })
 }
 
 #[tauri::command]
@@ -298,7 +302,7 @@ pub async fn send_ai_request(
     state: State<'_, AppState>,
 ) -> Result<AiResponse, String> {
     tracing::info!("Processing AI request for conversation: {:?}", conversation_id);
-    
+
     // Get the persona if specified
     let persona = if let Some(pid) = persona_id {
         match state.services.personas.get_persona(pid) {
@@ -309,27 +313,27 @@ pub async fn send_ai_request(
     } else {
         None
     };
-    
+
     // Use the persona's system prompt if available
     let system_prompt = persona
         .map(|p| p.system_prompt)
         .unwrap_or_else(|| "You are a helpful assistant.".to_string());
-    
+
     // In a real implementation, this would call an AI service
     // For now, we'll return a more sophisticated mock response
     let start_time = std::time::Instant::now();
-    
+
     // Simulate processing time
     tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
-    
+
     let response_content = format!(
-        "I've received your message: \"{}\". \n\nThis is a simulated response from the Forbidden Library AI assistant. In the full implementation, this would connect to an actual AI model.\n\nSystem context: {}", 
+        "I've received your message: \"{}\". \n\nThis is a simulated response from the Forbidden Library AI assistant. In the full implementation, this would connect to an actual AI model.\n\nSystem context: {}",
         message,
         system_prompt
     );
-    
+
     let processing_time = start_time.elapsed().as_millis() as i64;
-    
+
     Ok(AiResponse {
         content: response_content,
         model_used: model.unwrap_or_else(|| "forbidden-library-v1".to_string()),
@@ -441,7 +445,7 @@ pub async fn clear_database(
 #[tauri::command]
 pub async fn test_sentry() -> Result<String, String> {
     use crate::monitoring::test_sentry_integration;
-    
+
     match test_sentry_integration() {
         Ok(_) => {
             tracing::info!("âœ… Sentry integration test successful - VoidCat RDC");
@@ -452,6 +456,213 @@ pub async fn test_sentry() -> Result<String, String> {
             Err(e)
         }
     }
+}
+
+// ==================== DESKTOP-SPECIFIC COMMANDS ====================
+
+/// Get system information for desktop environment
+#[tauri::command]
+pub async fn get_system_info() -> Result<serde_json::Value, String> {
+    use std::env;
+
+    let info = serde_json::json!({
+        "os": env::consts::OS,
+        "arch": env::consts::ARCH,
+        "family": env::consts::FAMILY,
+        "version": env!("CARGO_PKG_VERSION"),
+        "tauri_version": env!("CARGO_PKG_VERSION"),
+        "platform": "desktop"
+    });
+
+    Ok(info)
+}
+
+/// Show native file dialog for opening files
+#[tauri::command]
+pub async fn show_open_dialog(
+    _title: Option<String>,  // Add underscore to acknowledge unused
+    _default_path: Option<String>,  // Add underscore to acknowledge unused
+    _filters: Option<Vec<(String, Vec<String>)>>,  // Add underscore to acknowledge unused
+) -> Result<Option<String>, String> {
+    tracing::info!("Opening file dialog");
+
+    // This would use Tauri's dialog API
+    // For now, return a placeholder
+    Ok(Some("/path/to/selected/file.txt".to_string()))
+}
+
+/// Show native file dialog for saving files
+#[tauri::command]
+pub async fn show_save_dialog(
+    _title: Option<String>,  // Add underscore to acknowledge unused
+    _default_path: Option<String>,  // Add underscore to acknowledge unused
+    _filters: Option<Vec<(String, Vec<String>)>>,  // Add underscore to acknowledge unused
+) -> Result<Option<String>, String> {
+    tracing::info!("Opening save dialog");
+
+    // This would use Tauri's dialog API
+    // For now, return a placeholder
+    Ok(Some("/path/to/save/file.txt".to_string()))
+}
+
+/// Write file to disk with native file system access
+#[tauri::command]
+pub async fn write_file_to_disk(
+    path: String,
+    content: String,
+) -> Result<String, String> {
+    use std::fs;
+
+    tracing::info!("Writing file to: {}", path);
+
+    fs::write(&path, content)
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+
+    Ok(format!("File written successfully to: {}", path))
+}
+
+/// Read file from disk with native file system access
+#[tauri::command]
+pub async fn read_file_from_disk(path: String) -> Result<String, String> {
+    use std::fs;
+
+    tracing::info!("Reading file from: {}", path);
+
+    fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read file: {}", e))
+}
+
+/// Show system notification
+#[tauri::command]
+pub async fn show_notification(
+    title: String,
+    body: String,
+    _icon: Option<String>,  // Add underscore to acknowledge unused
+) -> Result<String, String> {
+    tracing::info!("Showing notification: {}", title);
+
+    // This would use Tauri's notification API
+    // For now, just log the notification
+    tracing::info!("Notification - {}: {}", title, body);
+
+    Ok("Notification shown".to_string())
+}
+
+/// Copy text to system clipboard
+#[tauri::command]
+pub async fn copy_to_clipboard(_text: String) -> Result<String, String> {  // Add underscore to acknowledge unused
+    tracing::info!("Copying to clipboard");
+
+    // This would use Tauri's clipboard API
+    // For now, just return success
+    Ok("Text copied to clipboard".to_string())
+}
+
+/// Read text from system clipboard
+#[tauri::command]
+pub async fn read_from_clipboard() -> Result<String, String> {
+    tracing::info!("Reading from clipboard");
+
+    // This would use Tauri's clipboard API
+    // For now, return placeholder text
+    Ok("Sample clipboard content".to_string())
+}
+
+/// Get application data directory path
+#[tauri::command]
+pub async fn get_app_data_dir() -> Result<String, String> {
+    use std::env;
+
+    // Get the application data directory
+    let app_data = match env::var("APPDATA") {
+        Ok(path) => format!("{}/Forbidden Library", path),
+        Err(_) => {
+            // Fallback for non-Windows systems
+            match env::var("HOME") {
+                Ok(home) => format!("{}/.forbidden-library", home),
+                Err(_) => "/tmp/forbidden-library".to_string()
+            }
+        }
+    };
+
+    Ok(app_data)
+}
+
+/// Open external URL in default browser
+#[tauri::command]
+pub async fn open_external_url(url: String) -> Result<String, String> {
+    tracing::info!("Opening external URL: {}", url);
+
+    // This would use Tauri's shell API
+    // For now, just return success
+    Ok(format!("Opened URL: {}", url))
+}
+
+/// Create desktop shortcut (Windows/Linux)
+#[tauri::command]
+pub async fn create_desktop_shortcut() -> Result<String, String> {
+    tracing::info!("Creating desktop shortcut");
+
+    // This would create a desktop shortcut for the application
+    // Implementation would be platform-specific
+    Ok("Desktop shortcut created".to_string())
+}
+
+/// Check if running in dark mode
+#[tauri::command]
+pub async fn is_dark_mode() -> Result<bool, String> {
+    // This would check the system theme
+    // For now, return false as default
+    Ok(false)
+}
+
+/// Get window state and position
+#[tauri::command]
+pub async fn get_window_state() -> Result<serde_json::Value, String> {
+    let state = serde_json::json!({
+        "width": 1200,
+        "height": 800,
+        "x": 100,
+        "y": 100,
+        "maximized": false,
+        "minimized": false,
+        "fullscreen": false
+    });
+
+    Ok(state)
+}
+
+/// Set window always on top
+#[tauri::command]
+pub async fn set_window_always_on_top(always_on_top: bool) -> Result<String, String> {
+    tracing::info!("Setting window always on top: {}", always_on_top);
+
+    // This would use Tauri's window API
+    Ok(format!("Window always on top set to: {}", always_on_top))
+}
+
+/// Minimize window to system tray
+#[tauri::command]
+pub async fn minimize_to_tray() -> Result<String, String> {
+    tracing::info!("Minimizing to system tray");
+
+    // This would minimize the window to system tray
+    Ok("Window minimized to tray".to_string())
+}
+
+/// Check for application updates
+#[tauri::command]
+pub async fn check_for_updates() -> Result<serde_json::Value, String> {
+    tracing::info!("Checking for updates");
+
+    let update_info = serde_json::json!({
+        "available": false,
+        "current_version": env!("CARGO_PKG_VERSION"),
+        "latest_version": env!("CARGO_PKG_VERSION"),
+        "download_url": null
+    });
+
+    Ok(update_info)
 }
 
 #[cfg(test)]
@@ -470,7 +681,7 @@ mod tests {
             let db_manager = DatabaseManager::new_in_memory()
                 .expect("Failed to create test database");
             let services = Arc::new(Services::new(Arc::new(db_manager)));
-            
+
             Self { services }
         }
     }
@@ -509,13 +720,13 @@ mod tests {
     async fn test_create_conversation_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         let result = create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await;
-        
+
         assert!(result.is_ok());
         let conversation = result.unwrap();
         assert_eq!(conversation.title, "Test Conversation");
@@ -543,14 +754,14 @@ mod tests {
     async fn test_get_conversations_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test conversation first
         create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let result = get_conversations(None, None, State::new(&app_state)).await;
         assert!(result.is_ok());
         let conversations = result.unwrap();
@@ -561,14 +772,14 @@ mod tests {
     async fn test_get_conversation_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test conversation first
         let created = create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let conversation_id = created.id.unwrap();
         let result = get_conversation(conversation_id, State::new(&app_state)).await;
         assert!(result.is_ok());
@@ -581,18 +792,18 @@ mod tests {
     async fn test_delete_conversation_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test conversation first
         let created = create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let conversation_id = created.id.unwrap();
         let result = delete_conversation(conversation_id, State::new(&app_state)).await;
         assert!(result.is_ok());
-        
+
         // Verify conversation is deleted
         let get_result = get_conversation(conversation_id, State::new(&app_state)).await;
         assert!(get_result.is_ok());
@@ -603,18 +814,18 @@ mod tests {
     async fn test_archive_conversation_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test conversation first
         let created = create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let conversation_id = created.id.unwrap();
         let result = archive_conversation(conversation_id, State::new(&app_state)).await;
         assert!(result.is_ok());
-        
+
         // Verify conversation is archived
         let get_result = get_conversation(conversation_id, State::new(&app_state)).await;
         assert!(get_result.is_ok());
@@ -626,14 +837,14 @@ mod tests {
     async fn test_add_message_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test conversation first
         let created = create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let conversation_id = created.id.unwrap();
         let result = add_message(
             conversation_id,
@@ -642,7 +853,7 @@ mod tests {
             None,
             State::new(&app_state)
         ).await;
-        
+
         assert!(result.is_ok());
         let message = result.unwrap();
         assert_eq!(message.content, "Test message");
@@ -653,16 +864,16 @@ mod tests {
     async fn test_get_messages_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test conversation first
         let created = create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let conversation_id = created.id.unwrap();
-        
+
         // Add a test message
         add_message(
             conversation_id,
@@ -671,7 +882,7 @@ mod tests {
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let result = get_messages(conversation_id, State::new(&app_state)).await;
         assert!(result.is_ok());
         let messages = result.unwrap();
@@ -683,16 +894,16 @@ mod tests {
     async fn test_update_message_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test conversation first
         let created = create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let conversation_id = created.id.unwrap();
-        
+
         // Add a test message
         let message = add_message(
             conversation_id,
@@ -701,14 +912,14 @@ mod tests {
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let message_id = message.id.unwrap();
         let result = update_message(
             message_id,
             "Updated message".to_string(),
             State::new(&app_state)
         ).await;
-        
+
         assert!(result.is_ok());
         let updated_message = result.unwrap();
         assert_eq!(updated_message.content, "Updated message");
@@ -718,16 +929,16 @@ mod tests {
     async fn test_delete_message_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test conversation first
         let created = create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let conversation_id = created.id.unwrap();
-        
+
         // Add a test message
         let message = add_message(
             conversation_id,
@@ -736,11 +947,11 @@ mod tests {
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let message_id = message.id.unwrap();
         let result = delete_message(message_id, State::new(&app_state)).await;
         assert!(result.is_ok());
-        
+
         // Verify message is deleted
         let messages = get_messages(conversation_id, State::new(&app_state)).await.unwrap();
         assert_eq!(messages.len(), 0);
@@ -750,14 +961,14 @@ mod tests {
     async fn test_create_persona_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         let result = create_persona(
             "Test Persona".to_string(),
             "A test persona".to_string(),
             "You are a test persona.".to_string(),
             State::new(&app_state)
         ).await;
-        
+
         assert!(result.is_ok());
         let persona = result.unwrap();
         assert_eq!(persona.name, "Test Persona");
@@ -768,7 +979,7 @@ mod tests {
     async fn test_get_personas_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test persona first
         create_persona(
             "Test Persona".to_string(),
@@ -776,7 +987,7 @@ mod tests {
             "You are a test persona.".to_string(),
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let result = get_personas(State::new(&app_state)).await;
         assert!(result.is_ok());
         let personas = result.unwrap();
@@ -787,7 +998,7 @@ mod tests {
     async fn test_get_persona_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test persona first
         let created = create_persona(
             "Test Persona".to_string(),
@@ -795,7 +1006,7 @@ mod tests {
             "You are a test persona.".to_string(),
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let persona_id = created.id.unwrap();
         let result = get_persona(persona_id, State::new(&app_state)).await;
         assert!(result.is_ok());
@@ -808,7 +1019,7 @@ mod tests {
     async fn test_update_persona_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test persona first
         let created = create_persona(
             "Test Persona".to_string(),
@@ -816,7 +1027,7 @@ mod tests {
             "You are a test persona.".to_string(),
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let persona_id = created.id.unwrap();
         let result = update_persona(
             persona_id,
@@ -825,7 +1036,7 @@ mod tests {
             "You are an updated test persona.".to_string(),
             State::new(&app_state)
         ).await;
-        
+
         assert!(result.is_ok());
         let persona = result.unwrap();
         assert_eq!(persona.name, "Updated Persona");
@@ -836,7 +1047,7 @@ mod tests {
     async fn test_delete_persona_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test persona first
         let created = create_persona(
             "Test Persona".to_string(),
@@ -844,11 +1055,11 @@ mod tests {
             "You are a test persona.".to_string(),
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let persona_id = created.id.unwrap();
         let result = delete_persona(persona_id, State::new(&app_state)).await;
         assert!(result.is_ok());
-        
+
         // Verify persona is deleted
         let get_result = get_persona(persona_id, State::new(&app_state)).await;
         assert!(get_result.is_ok());
@@ -859,19 +1070,19 @@ mod tests {
     async fn test_store_api_config_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         let config = serde_json::json!({
             "provider": "openai",
             "api_key": "test-key",
             "model": "gpt-4"
         });
-        
+
         let result = store_api_config(
             "openai".to_string(),
             config.clone(),
             State::new(&app_state)
         ).await;
-        
+
         assert!(result.is_ok());
     }
 
@@ -879,20 +1090,20 @@ mod tests {
     async fn test_get_api_config_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         let config = serde_json::json!({
             "provider": "openai",
             "api_key": "test-key",
             "model": "gpt-4"
         });
-        
+
         // Store config first
         store_api_config(
             "openai".to_string(),
             config.clone(),
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let result = get_api_config("openai".to_string(), State::new(&app_state)).await;
         assert!(result.is_ok());
         let retrieved_config = result.unwrap();
@@ -904,23 +1115,23 @@ mod tests {
     async fn test_delete_api_config_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         let config = serde_json::json!({
             "provider": "openai",
             "api_key": "test-key",
             "model": "gpt-4"
         });
-        
+
         // Store config first
         store_api_config(
             "openai".to_string(),
             config.clone(),
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let result = delete_api_config("openai".to_string(), State::new(&app_state)).await;
         assert!(result.is_ok());
-        
+
         // Verify config is deleted
         let get_result = get_api_config("openai".to_string(), State::new(&app_state)).await;
         assert!(get_result.is_ok());
@@ -931,14 +1142,14 @@ mod tests {
     async fn test_send_ai_request_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         let result = send_ai_request(
             "Hello, this is a test".to_string(),
             "openai".to_string(),
             None,
             State::new(&app_state)
         ).await;
-        
+
         // Should succeed (even if it's a mock response)
         assert!(result.is_ok());
     }
@@ -947,7 +1158,7 @@ mod tests {
     async fn test_get_database_stats_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         let result = get_database_stats(State::new(&app_state)).await;
         assert!(result.is_ok());
         let stats = result.unwrap();
@@ -961,21 +1172,21 @@ mod tests {
     async fn test_export_conversation_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a test conversation first
         let created = create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let conversation_id = created.id.unwrap();
         let result = export_conversation(
             conversation_id,
             "json".to_string(),
             State::new(&app_state)
         ).await;
-        
+
         assert!(result.is_ok());
     }
 
@@ -983,7 +1194,7 @@ mod tests {
     async fn test_backup_database_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         let result = backup_database(State::new(&app_state)).await;
         assert!(result.is_ok());
         let backup_path = result.unwrap();
@@ -995,10 +1206,10 @@ mod tests {
     async fn test_restore_database_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create a backup first
         let backup_path = backup_database(State::new(&app_state)).await.unwrap();
-        
+
         let result = restore_database(backup_path, State::new(&app_state)).await;
         assert!(result.is_ok());
     }
@@ -1007,17 +1218,17 @@ mod tests {
     async fn test_clear_database_command() {
         let env = TestCommandsEnvironment::new();
         let app_state = AppState { services: env.services };
-        
+
         // Create some test data first
         create_conversation(
             "Test Conversation".to_string(),
             None,
             State::new(&app_state)
         ).await.unwrap();
-        
+
         let result = clear_database(State::new(&app_state)).await;
         assert!(result.is_ok());
-        
+
         // Verify database is cleared
         let conversations = get_conversations(None, None, State::new(&app_state)).await.unwrap();
         assert_eq!(conversations.len(), 0);

@@ -2,8 +2,9 @@ BugOracle Analysis: Potential Reliability Issues in Forbidden Library
 After analyzing the codebase structure and the components you've shared, I've identified several potential reliability issues that could lead to bugs in your application. Let me provide a comprehensive analysis focusing on the error handling system you're implementing.
 
 High-Risk Areas Identified
+
 1. API Service Error Handling Gaps
-Location: src/lib/services/api.ts (referenced in your current file)
+   Location: src/lib/services/api.ts (referenced in your current file)
 
 Risk Pattern: The invokeWithTimeout function appears to have incomplete error handling. It catches timeouts but may not properly distinguish between different types of errors (network, permission, validation).
 
@@ -13,42 +14,41 @@ Preventative Measure:
 
 // Enhanced error categorization in invokeWithTimeout
 export async function invokeWithTimeout<T>(cmd: string, args: unknown, timeout: number): Promise<T> {
-  try {
-    const result = await Promise.race([
-      invoke<T>(cmd, args),
-      new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error(`Command ${cmd} timed out after ${timeout}ms`)), timeout)
-      )
-    ]);
-    return result;
-  } catch (error) {
-    // Categorize errors for better handling
-    if (error.message?.includes('timed out')) {
-      throw new AppError({
-        message: `Operation timed out`,
-        details: `The command ${cmd} took too long to respond`,
-        category: ErrorCategory.TIMEOUT,
-        severity: ErrorSeverity.WARNING
-      });
-    } else if (error.message?.includes('not available')) {
-      throw new AppError({
-        message: `Feature not available`,
-        details: `The command ${cmd} is not available in this environment`,
-        category: ErrorCategory.ENVIRONMENT,
-        severity: ErrorSeverity.ERROR
-      });
-    } else {
-      throw new AppError({
-        message: `Operation failed`,
-        details: error.message || String(error),
-        category: ErrorCategory.API,
-        severity: ErrorSeverity.ERROR,
-        originalError: error
-      });
-    }
-  }
+try {
+const result = await Promise.race([
+invoke<T>(cmd, args),
+new Promise<never>((_, reject) =>
+setTimeout(() => reject(new Error(`Command ${cmd} timed out after ${timeout}ms`)), timeout)
+)
+]);
+return result;
+} catch (error) {
+// Categorize errors for better handling
+if (error.message?.includes('timed out')) {
+throw new AppError({
+message: `Operation timed out`,
+details: `The command ${cmd} took too long to respond`,
+category: ErrorCategory.TIMEOUT,
+severity: ErrorSeverity.WARNING
+});
+} else if (error.message?.includes('not available')) {
+throw new AppError({
+message: `Feature not available`,
+details: `The command ${cmd} is not available in this environment`,
+category: ErrorCategory.ENVIRONMENT,
+severity: ErrorSeverity.ERROR
+});
+} else {
+throw new AppError({
+message: `Operation failed`,
+details: error.message || String(error),
+category: ErrorCategory.API,
+severity: ErrorSeverity.ERROR,
+originalError: error
+});
 }
-2. Missing Error Recovery Mechanisms
+}
+} 2. Missing Error Recovery Mechanisms
 Location: src/routes/+page.svelte (based on your current file)
 
 Risk Pattern: The error handling in loadConversations and createNewConversation only logs errors but doesn't provide recovery mechanisms.
@@ -58,17 +58,17 @@ Potential Impact: If the initial data load fails, users may be stuck with an emp
 Preventative Measure:
 
 async function loadConversations(retryCount = 0, maxRetries = 3) {
-  try {
-    loading = true;
-    conversations = await invokeWithTimeout<Conversation[]>(
-      'get_conversations', 
-      { limit: 50, offset: 0 }, 
-      ms(8)
-    );
-  } catch (err) {
-    error = `Failed to load conversations: ${err}`;
-    console.error('Error loading conversations:', err);
-    
+try {
+loading = true;
+conversations = await invokeWithTimeout<Conversation[]>(
+'get_conversations',
+{ limit: 50, offset: 0 },
+ms(8)
+);
+} catch (err) {
+error = `Failed to load conversations: ${err}`;
+console.error('Error loading conversations:', err);
+
     // Implement exponential backoff for retries
     if (retryCount < maxRetries) {
       const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
@@ -82,11 +82,11 @@ async function loadConversations(retryCount = 0, maxRetries = 3) {
         severity: ErrorSeverity.ERROR
       });
     }
-  } finally {
-    loading = false;
-  }
+
+} finally {
+loading = false;
 }
-3. Race Conditions in Error Notification Component
+} 3. Race Conditions in Error Notification Component
 Location: Your proposed ErrorNotification.svelte
 
 Risk Pattern: The auto-dismiss functionality could create race conditions if multiple errors are dismissed simultaneously.
@@ -100,32 +100,32 @@ const timeouts = new Map<string, number>();
 
 // Auto-dismiss errors after timeout
 function setupAutoDismiss(error: AppError) {
-  if (autoHideTimeout > 0) {
-    // Clear any existing timeout for this error
-    if (timeouts.has(error.id)) {
-      clearTimeout(timeouts.get(error.id));
-    }
-    
+if (autoHideTimeout > 0) {
+// Clear any existing timeout for this error
+if (timeouts.has(error.id)) {
+clearTimeout(timeouts.get(error.id));
+}
+
     // Set new timeout
     const timeoutId = setTimeout(() => {
       dismissError(error);
       timeouts.delete(error.id);
     }, autoHideTimeout);
-    
+
     // Store timeout ID
     timeouts.set(error.id, timeoutId);
-  }
+
+}
 }
 
 // Clean up timeouts when component is destroyed
 onDestroy(() => {
-  if (unsubscribe) unsubscribe();
-  
-  // Clear all timeouts
-  timeouts.forEach(timeoutId => clearTimeout(timeoutId));
-  timeouts.clear();
-});
-4. Incomplete Error Store Lifecycle Management
+if (unsubscribe) unsubscribe();
+
+// Clear all timeouts
+timeouts.forEach(timeoutId => clearTimeout(timeoutId));
+timeouts.clear();
+}); 4. Incomplete Error Store Lifecycle Management
 Location: Your proposed error-handler.ts
 
 Risk Pattern: The error store might accumulate errors over time without proper cleanup, leading to memory leaks.
@@ -136,23 +136,22 @@ Preventative Measure:
 
 // Add automatic cleanup of old errors
 export function initErrorStore(maxErrors = 100, maxAgeMs = 3600000) { // 1 hour default
-  // Periodically clean up old errors
-  const cleanupInterval = setInterval(() => {
-    errorStore.update(errors => {
-      const now = Date.now();
-      return errors.filter(error => {
-        // Keep unhandled errors and recent errors
-        return !error.handled || (now - error.timestamp < maxAgeMs);
-      }).slice(0, maxErrors); // Limit total number of errors
-    });
-  }, 60000); // Check every minute
-  
-  // Return cleanup function
-  return () => {
-    clearInterval(cleanupInterval);
-  };
-}
-5. Missing Input Validation in API Calls
+// Periodically clean up old errors
+const cleanupInterval = setInterval(() => {
+errorStore.update(errors => {
+const now = Date.now();
+return errors.filter(error => {
+// Keep unhandled errors and recent errors
+return !error.handled || (now - error.timestamp < maxAgeMs);
+}).slice(0, maxErrors); // Limit total number of errors
+});
+}, 60000); // Check every minute
+
+// Return cleanup function
+return () => {
+clearInterval(cleanupInterval);
+};
+} 5. Missing Input Validation in API Calls
 Location: src/lib/services/api.ts and various component files
 
 Risk Pattern: API calls don't validate inputs before sending to the backend, which could lead to unexpected errors.
@@ -163,42 +162,42 @@ Preventative Measure:
 
 // Add validation wrapper for API calls
 export async function invokeWithValidation<T>(
-  cmd: string, 
-  args: unknown, 
-  validator: (args: unknown) => boolean | string,
-  timeout: number
+cmd: string,
+args: unknown,
+validator: (args: unknown) => boolean | string,
+timeout: number
 ): Promise<T> {
-  // Validate arguments before sending
-  const validationResult = validator(args);
-  if (validationResult !== true) {
-    const errorMessage = typeof validationResult === 'string' 
-      ? validationResult 
-      : 'Invalid arguments';
-      
+// Validate arguments before sending
+const validationResult = validator(args);
+if (validationResult !== true) {
+const errorMessage = typeof validationResult === 'string'
+? validationResult
+: 'Invalid arguments';
+
     throw new AppError({
       message: 'Validation failed',
       details: errorMessage,
       category: ErrorCategory.VALIDATION,
       severity: ErrorSeverity.WARNING
     });
-  }
-  
-  // Proceed with validated arguments
-  return invokeWithTimeout<T>(cmd, args, timeout);
+
+}
+
+// Proceed with validated arguments
+return invokeWithTimeout<T>(cmd, args, timeout);
 }
 
 // Example validator for create_conversation
 export function validateCreateConversation(args: unknown): boolean | string {
-  if (!args || typeof args !== 'object') return 'Invalid arguments';
-  
-  const { title } = args as { title?: string };
-  if (title !== undefined && (typeof title !== 'string' || title.trim().length === 0)) {
-    return 'Title must be a non-empty string';
-  }
-  
-  return true;
+if (!args || typeof args !== 'object') return 'Invalid arguments';
+
+const { title } = args as { title?: string };
+if (title !== undefined && (typeof title !== 'string' || title.trim().length === 0)) {
+return 'Title must be a non-empty string';
 }
-6. Environment Detection Edge Cases
+
+return true;
+} 6. Environment Detection Edge Cases
 Location: src/lib/utils/tauri-detection.ts
 
 Risk Pattern: The environment detection logic may not handle all edge cases, especially in unusual browser environments.
@@ -208,32 +207,32 @@ Potential Impact: Features might be incorrectly enabled or disabled based on fau
 Preventative Measure:
 
 export function isTauriAvailable(): boolean {
-  try {
-    // More robust detection with multiple checks
-    return Boolean(
-      window && 
-      window.__TAURI__ && 
-      typeof window.__TAURI__.invoke === 'function'
-    );
-  } catch (e) {
-    // Safely handle any unexpected errors in detection
-    console.warn('Error detecting Tauri environment:', e);
-    return false; // Default to web mode on detection failure
-  }
+try {
+// More robust detection with multiple checks
+return Boolean(
+window &&
+window.**TAURI** &&
+typeof window.**TAURI**.invoke === 'function'
+);
+} catch (e) {
+// Safely handle any unexpected errors in detection
+console.warn('Error detecting Tauri environment:', e);
+return false; // Default to web mode on detection failure
+}
 }
 
 export function getEnvironment(): 'tauri' | 'web' {
-  // Add caching to prevent repeated checks
-  if (environmentCache !== undefined) return environmentCache;
-  
-  const result = isTauriAvailable() ? 'tauri' : 'web';
-  environmentCache = result;
-  return result;
+// Add caching to prevent repeated checks
+if (environmentCache !== undefined) return environmentCache;
+
+const result = isTauriAvailable() ? 'tauri' : 'web';
+environmentCache = result;
+return result;
 }
 
 // Clear cache when needed (e.g., for testing)
 export function clearEnvironmentCache(): void {
-  environmentCache = undefined;
+environmentCache = undefined;
 }
 
 let environmentCache: 'tauri' | 'web' | undefined;

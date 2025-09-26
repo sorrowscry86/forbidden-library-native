@@ -20,6 +20,7 @@ Our testing approach is guided by the **VoidCat RDC Excellence Protocol**:
 **Purpose**: Test individual functions and methods in isolation
 
 **Coverage**:
+
 - Command handlers (IPC layer)
 - Service layer operations
 - Database operations
@@ -27,17 +28,18 @@ Our testing approach is guided by the **VoidCat RDC Excellence Protocol**:
 - Error handling
 
 **Example**:
+
 ```rust
 #[tokio::test]
 async fn test_create_conversation() {
     let (app_state, _temp_dir) = setup_test_environment().await;
-    
+
     let result = create_conversation(
         "Test Conversation".to_string(),
         None,
         State::new(&app_state)
     ).await;
-    
+
     assert!(result.is_ok());
     let conversation = result.unwrap();
     assert_eq!(conversation.title, "Test Conversation");
@@ -50,6 +52,7 @@ async fn test_create_conversation() {
 **Purpose**: Test complete workflows and cross-module interactions
 
 **Coverage**:
+
 - Complete conversation lifecycle
 - Persona management workflow
 - API configuration workflow
@@ -58,18 +61,19 @@ async fn test_create_conversation() {
 - Export and backup functionality
 
 **Example**:
+
 ```rust
 #[tokio::test]
 async fn test_conversation_lifecycle() {
     let env = IntegrationTestEnvironment::new();
-    
+
     // 1. Create conversation
     let conversation = create_conversation(
         "Integration Test Conversation".to_string(),
         None,
         State::new(&env.app_state)
     ).await.unwrap();
-    
+
     // 2. Add messages
     let user_message = add_message(
         conversation.id.unwrap(),
@@ -78,7 +82,7 @@ async fn test_conversation_lifecycle() {
         None,
         State::new(&env.app_state)
     ).await.unwrap();
-    
+
     // 3. Verify complete workflow
     assert_eq!(user_message.role, MessageRole::User);
     assert_eq!(user_message.content, "Hello, this is a test message");
@@ -90,6 +94,7 @@ async fn test_conversation_lifecycle() {
 **Purpose**: Validate security measures and prevent common vulnerabilities
 
 **Coverage**:
+
 - SQL injection prevention
 - Path traversal prevention
 - Command injection prevention
@@ -100,30 +105,31 @@ async fn test_conversation_lifecycle() {
 - Data integrity under malicious input
 
 **Example**:
+
 ```rust
 #[tokio::test]
 async fn test_sql_injection_prevention_conversations() {
     let env = SecurityTestEnvironment::new();
-    
+
     let malicious_inputs = vec![
         "'; DROP TABLE conversations; --",
         "' OR '1'='1",
         "'; INSERT INTO conversations VALUES (999, 'hacked', 1, '2023-01-01', '2023-01-01', 'false'); --",
     ];
-    
+
     for malicious_input in malicious_inputs {
         let result = create_conversation(
             malicious_input.to_string(),
             None,
             State::new(&env.app_state)
         ).await;
-        
+
         // Should succeed but not cause SQL injection
         assert!(result.is_ok());
-        
+
         let conversation = result.unwrap();
         assert_eq!(conversation.title, malicious_input);
-        
+
         // Verify table structure is intact
         let conversations = get_conversations(None, None, State::new(&env.app_state)).await.unwrap();
         assert!(!conversations.is_empty());
@@ -136,6 +142,7 @@ async fn test_sql_injection_prevention_conversations() {
 **Purpose**: Validate performance requirements and identify bottlenecks
 
 **Coverage**:
+
 - Sub-second startup validation
 - 60 FPS UI responsiveness
 - Memory efficiency
@@ -144,10 +151,11 @@ async fn test_sql_injection_prevention_conversations() {
 - Large dataset handling
 
 **Example**:
+
 ```rust
 fn benchmark_conversation_creation(c: &mut Criterion) {
     let services = setup_benchmark_environment();
-    
+
     c.bench_function("conversation_creation", |b| {
         b.iter(|| {
             let service = &services.conversations;
@@ -165,13 +173,13 @@ fn validate_performance_requirements() {
     let db_manager = DatabaseManager::new_in_memory().unwrap();
     let services = Services::new(Arc::new(db_manager));
     let startup_duration = startup_start.elapsed();
-    
+
     assert!(
         startup_duration.as_millis() < 1000,
         "Startup time exceeds 1 second: {:?}",
         startup_duration
     );
-    
+
     // Test 2: 60 FPS equivalent operations (16.67ms per operation)
     let fps_start = Instant::now();
     for _ in 0..60 {
@@ -182,7 +190,7 @@ fn validate_performance_requirements() {
     }
     let fps_duration = fps_start.elapsed();
     let avg_operation_time = fps_duration.as_millis() / 60;
-    
+
     assert!(
         avg_operation_time < 16,
         "Operation time exceeds 60 FPS target: {}ms",
@@ -260,11 +268,13 @@ cargo llvm-cov --all-features --workspace --html
 The testing framework is integrated into GitHub Actions with the following workflow:
 
 ### Test Matrix
+
 - **Operating Systems**: Ubuntu, Windows, macOS
 - **Rust Versions**: Stable, 1.70
 - **Test Types**: Unit, Integration, Security, Performance, Coverage
 
 ### Automated Checks
+
 1. **Code Quality**: `cargo fmt`, `cargo clippy`
 2. **Security**: `cargo audit`, security tests
 3. **Functionality**: Unit and integration tests
@@ -273,6 +283,7 @@ The testing framework is integrated into GitHub Actions with the following workf
 6. **Build**: Tauri application build test
 
 ### Quality Gates
+
 - All tests must pass
 - Code coverage must be ≥80%
 - No security vulnerabilities
@@ -291,7 +302,7 @@ fn setup_test_environment() -> (ConversationService, TempDir) {
     let db_manager = DatabaseManager::new_in_memory()
         .expect("Failed to create test database");
     let service = ConversationService::new(Arc::new(db_manager));
-    
+
     (service, temp_dir)
 }
 ```
@@ -305,10 +316,10 @@ For testing external dependencies:
 mod tests {
     use mockall::predicate::*;
     use mockall::*;
-    
+
     mock! {
         ApiClient {}
-        
+
         impl ApiClient {
             pub async fn send_request(&self, message: String) -> Result<String, String>;
         }
@@ -323,11 +334,11 @@ mod tests {
 ```rust
 fn validate_startup_performance() {
     let start = Instant::now();
-    
+
     // Simulate application startup
     let db_manager = DatabaseManager::new_in_memory().unwrap();
     let services = Services::new(Arc::new(db_manager));
-    
+
     let duration = start.elapsed();
     assert!(
         duration.as_millis() < 1000,
@@ -342,7 +353,7 @@ fn validate_startup_performance() {
 ```rust
 fn validate_ui_responsiveness() {
     let services = setup_benchmark_environment();
-    
+
     // Simulate 60 FPS operations
     let start = Instant::now();
     for _ in 0..60 {
@@ -352,7 +363,7 @@ fn validate_ui_responsiveness() {
         ).unwrap();
     }
     let duration = start.elapsed();
-    
+
     let avg_time = duration.as_millis() / 60;
     assert!(
         avg_time < 16,
@@ -370,7 +381,7 @@ fn validate_ui_responsiveness() {
 #[tokio::test]
 async fn test_input_validation_conversation_titles() {
     let env = SecurityTestEnvironment::new();
-    
+
     // Test extremely long titles
     let long_title = "a".repeat(10000);
     let result = create_conversation(
@@ -378,9 +389,9 @@ async fn test_input_validation_conversation_titles() {
         None,
         State::new(&env.app_state)
     ).await;
-    
+
     assert!(result.is_ok());
-    
+
     // Test titles with null bytes
     let null_title = "test\0title";
     let result = create_conversation(
@@ -388,7 +399,7 @@ async fn test_input_validation_conversation_titles() {
         None,
         State::new(&env.app_state)
     ).await;
-    
+
     assert!(result.is_ok());
 }
 ```
@@ -399,23 +410,23 @@ async fn test_input_validation_conversation_titles() {
 #[tokio::test]
 async fn test_sql_injection_prevention() {
     let env = SecurityTestEnvironment::new();
-    
+
     let malicious_inputs = vec![
         "'; DROP TABLE conversations; --",
         "' OR '1'='1",
         "'; INSERT INTO conversations VALUES (999, 'hacked', 1, '2023-01-01', '2023-01-01', 'false'); --",
     ];
-    
+
     for malicious_input in malicious_inputs {
         let result = create_conversation(
             malicious_input.to_string(),
             None,
             State::new(&env.app_state)
         ).await;
-        
+
         // Should succeed but not cause SQL injection
         assert!(result.is_ok());
-        
+
         // Verify table structure is intact
         let conversations = get_conversations(None, None, State::new(&env.app_state)).await.unwrap();
         assert!(!conversations.is_empty());
@@ -494,6 +505,7 @@ cargo test --features test-feature
 ### Test Documentation
 
 All tests should include:
+
 - Clear description of what is being tested
 - Expected behavior
 - Any special setup requirements
@@ -502,7 +514,5 @@ All tests should include:
 ---
 
 **Forbidden Library Testing Framework v2.0.0**  
-*Maintained by Pandora - The Crucible of Code Perfection*  
-*VoidCat RDC Excellence Protocol*
-
-
+_Maintained by Pandora - The Crucible of Code Perfection_  
+_VoidCat RDC Excellence Protocol_

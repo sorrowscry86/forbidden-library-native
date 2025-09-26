@@ -11,11 +11,153 @@
     "version": "2.0.0"
   },
   "tauri": {
+    "allowlist": {
+      "all": false,
+      "fs": {
+        "all": false,
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true,
+        "copyFile": true,
+        "createDir": true,
+        "removeDir": true,
+        "removeFile": true,
+        "renameFile": true,
+        "exists": true,
+        "scope": [
+          "$APPDATA",
+          "$APPDATA/**",
+          "$DESKTOP",
+          "$DESKTOP/**",
+          "$DOCUMENT",
+          "$DOCUMENT/**",
+          "$DOWNLOAD",
+          "$DOWNLOAD/**"
+        ]
+      },
+      "dialog": {
+        "all": false,
+        "ask": true,
+        "confirm": true,
+        "message": true,
+        "open": true,
+        "save": true
+      },
+      "path": {
+        "all": true
+      },
+      "window": {
+        "all": false,
+        "close": true,
+        "hide": true,
+        "show": true,
+        "maximize": true,
+        "minimize": true,
+        "unmaximize": true,
+        "unminimize": true,
+        "setResizable": true,
+        "setTitle": true,
+        "setSize": true,
+        "setMinSize": true,
+        "setMaxSize": true,
+        "setPosition": true,
+        "setFullscreen": true,
+        "setFocus": true,
+        "setIcon": true,
+        "setSkipTaskbar": true,
+        "setDecorations": true,
+        "setAlwaysOnTop": true,
+        "center": true,
+        "requestUserAttention": true,
+        "print": true
+      },
+      "shell": {
+        "all": false,
+        "open": true,
+        "scope": [
+          {
+            "name": "sh",
+            "cmd": "sh",
+            "args": [
+              "-c",
+              {
+                "validator": "\\S+"
+              }
+            ]
+          },
+          {
+            "name": "cmd",
+            "cmd": "cmd",
+            "args": [
+              "/C",
+              {
+                "validator": "\\S+"
+              }
+            ]
+          }
+        ]
+      },
+      "notification": {
+        "all": true
+      },
+      "clipboard": {
+        "all": true
+      },
+      "globalShortcut": {
+        "all": true
+      },
+      "os": {
+        "all": true
+      },
+      "app": {
+        "all": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "com.forbiddenlibrary.dev",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/Sorrow-San/forbidden-library-native/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU5ODgwNDk1OTQyQzBBRDEgUldSWjVQR0JTNWhLek13ZzVUR0J2eXVWdk52R0JkM0k5V1BvS2MwZ0VuL3ZWbVBHZ05OTAp"
+    },
     "windows": [
       {
+        "fullscreen": false,
+        "resizable": true,
         "title": "Forbidden Library",
         "width": 1200,
-        "height": 800
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "center": true,
+        "decorations": true,
+        "alwaysOnTop": false,
+        "focus": true,
+        "transparent": false,
+        "skipTaskbar": false,
+        "fileDropEnabled": true,
+        "titleBarStyle": "Visible"
       }
     ]
   }

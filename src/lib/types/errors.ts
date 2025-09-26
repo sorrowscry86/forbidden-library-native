@@ -11,14 +11,14 @@ export enum ErrorCategory {
   DATA = 'data',
   NETWORK = 'network',
   PERMISSION = 'permission',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 export enum ErrorSeverity {
   INFO = 'info',
   WARNING = 'warning',
   ERROR = 'error',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 export interface AppErrorOptions {
@@ -83,7 +83,7 @@ export class AppError extends Error {
       context: this.context,
       recoverable: this.recoverable,
       handled: this.handled,
-      stack: this.stack
+      stack: this.stack,
     };
   }
 
@@ -130,6 +130,6 @@ export function createAppError(
     category,
     severity,
     originalError: error,
-    context
+    context,
   });
 }

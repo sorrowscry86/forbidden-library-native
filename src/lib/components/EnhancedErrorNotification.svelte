@@ -8,17 +8,17 @@
   export let showAnalytics = false; // Show error analytics
 
   let errors: AppError[] = [];
-  let timeouts = new Map<string, number>();
+  const timeouts = new Map<string, number>();
   let errorPatterns: any = {};
   let systemHealth: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
   // Subscribe to enhanced error store
-  const unsubscribe = errorStore.subscribe(state => {
+  const unsubscribe = errorStore.subscribe((state) => {
     errors = state.errors.slice(0, maxErrors);
     systemHealth = state.systemHealth;
 
     // Setup auto-dismiss for new errors
-    state.errors.forEach(error => {
+    state.errors.forEach((error) => {
       if (!timeouts.has(error.id) && shouldAutoDismiss(error)) {
         setupAutoDismiss(error);
       }
@@ -30,10 +30,12 @@
 
   // Determine if error should auto-dismiss
   function shouldAutoDismiss(error: AppError): boolean {
-    return autoHideTimeout > 0 &&
-           error.severity !== ErrorSeverity.CRITICAL &&
-           error.recoverable &&
-           !errorPatterns.cascadingFailures; // Don't auto-dismiss during cascading failures
+    return (
+      autoHideTimeout > 0 &&
+      error.severity !== ErrorSeverity.CRITICAL &&
+      error.recoverable &&
+      !errorPatterns.cascadingFailures
+    ); // Don't auto-dismiss during cascading failures
   }
 
   // Setup auto-dismiss with race condition prevention
@@ -80,7 +82,7 @@
     errorStore.clearAllErrors();
 
     // Clear all timeouts
-    timeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    timeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     timeouts.clear();
   }
 
@@ -143,9 +145,11 @@
     const now = Date.now();
     const diff = now - timestamp;
 
-    if (diff < 60000) { // Less than 1 minute
+    if (diff < 60000) {
+      // Less than 1 minute
       return 'Just now';
-    } else if (diff < 3600000) { // Less than 1 hour
+    } else if (diff < 3600000) {
+      // Less than 1 hour
       return `${Math.floor(diff / 60000)}m ago`;
     } else {
       return new Date(timestamp).toLocaleTimeString();
@@ -175,7 +179,7 @@
     if (unsubscribe) unsubscribe();
 
     // Clear all timeouts
-    timeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    timeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     timeouts.clear();
   });
 </script>
@@ -188,19 +192,24 @@
       <div class="bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm">
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center space-x-2">
-            <div class="w-2 h-2 rounded-full {systemHealth === 'healthy' ? 'bg-green-400' : systemHealth === 'degraded' ? 'bg-yellow-400' : 'bg-red-400'}"></div>
+            <div
+              class="w-2 h-2 rounded-full {systemHealth === 'healthy'
+                ? 'bg-green-400'
+                : systemHealth === 'degraded'
+                  ? 'bg-yellow-400'
+                  : 'bg-red-400'}"
+            ></div>
             <span class="text-gray-300 font-medium">System Status: {systemHealth}</span>
           </div>
-          <button
-            on:click={dismissAllErrors}
-            class="text-gray-400 hover:text-gray-200 text-xs"
-          >
+          <button on:click={dismissAllErrors} class="text-gray-400 hover:text-gray-200 text-xs">
             Clear All
           </button>
         </div>
 
         {#if errorPatterns.cascadingFailures}
-          <p class="text-yellow-300 text-xs">⚡ Detecting cascading failures - automatic recovery in progress</p>
+          <p class="text-yellow-300 text-xs">
+            ⚡ Detecting cascading failures - automatic recovery in progress
+          </p>
         {/if}
 
         {#if errorPatterns.highErrorRate}
@@ -208,7 +217,9 @@
         {/if}
 
         {#if errorPatterns.repeatedErrors.length > 0}
-          <p class="text-orange-300 text-xs">🔄 Repeated errors: {errorPatterns.repeatedErrors.join(', ')}</p>
+          <p class="text-orange-300 text-xs">
+            🔄 Repeated errors: {errorPatterns.repeatedErrors.join(', ')}
+          </p>
         {/if}
       </div>
     {/if}
@@ -216,7 +227,9 @@
     <!-- Individual error notifications -->
     {#each errors as error (error.id)}
       <div
-        class="border-l-4 rounded-lg shadow-lg transition-all duration-300 ease-in-out {getSeverityClasses(error.severity)}"
+        class="border-l-4 rounded-lg shadow-lg transition-all duration-300 ease-in-out {getSeverityClasses(
+          error.severity
+        )}"
         role="alert"
         aria-live="polite"
       >
@@ -243,7 +256,11 @@
                 {/if}
 
                 <div class="flex items-center space-x-2 mt-2">
-                  <span class="inline-block text-xs px-2 py-1 rounded {getCategoryColor(error.category)} bg-opacity-80">
+                  <span
+                    class="inline-block text-xs px-2 py-1 rounded {getCategoryColor(
+                      error.category
+                    )} bg-opacity-80"
+                  >
                     {error.category}
                   </span>
 
@@ -273,7 +290,11 @@
                     <summary class="text-xs cursor-pointer opacity-70 hover:opacity-100">
                       Debug Info
                     </summary>
-                    <pre class="text-xs mt-1 opacity-60 overflow-x-auto">{JSON.stringify(error.context, null, 2)}</pre>
+                    <pre class="text-xs mt-1 opacity-60 overflow-x-auto">{JSON.stringify(
+                        error.context,
+                        null,
+                        2
+                      )}</pre>
                   </details>
                 {/if}
               </div>
@@ -286,7 +307,12 @@
               aria-label="Dismiss error"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
               </svg>
             </button>
           </div>
@@ -296,7 +322,9 @@
             <div class="mt-3 w-full bg-black bg-opacity-20 rounded-full h-1">
               <div
                 class="bg-white bg-opacity-60 h-1 rounded-full transition-all duration-100 ease-linear"
-                style="animation: shrink {autoHideTimeout * (error.severity === ErrorSeverity.ERROR ? 2 : 1) * (systemHealth === 'unhealthy' ? 1.5 : 1)}ms linear forwards;"
+                style="animation: shrink {autoHideTimeout *
+                  (error.severity === ErrorSeverity.ERROR ? 2 : 1) *
+                  (systemHealth === 'unhealthy' ? 1.5 : 1)}ms linear forwards;"
               ></div>
             </div>
           {/if}

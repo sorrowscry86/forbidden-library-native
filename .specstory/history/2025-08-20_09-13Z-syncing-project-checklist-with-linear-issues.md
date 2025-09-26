@@ -25,11 +25,13 @@ _**Assistant**_
 Creating the remaining Linear issues across all phases with correct statuses and labels so your entire checklist is reflected in Linear. I’ve synchronized your “Project Checklist — Forbidden Library: Prototype to Production” to Linear so your plan is now fully trackable with statuses, labels, and a project.
 
 Plan
+
 - Create a Linear project and labels for phases
 - Parse the checklist and create/update issues with correct statuses
 - Map items to the new project and link key issue URLs
 
 What I did
+
 - Created project
   - Project: “Forbidden Library - Prototype to Production”
   - URL: https://linear.app/voidcatrdc/project/forbidden-library-prototype-to-production-fb5a081fbc87
@@ -39,6 +41,7 @@ What I did
   - Statuses used: `Done`, `In Progress`, `Todo` (team: `VoidCatRDC`)
 
 Issues created/updated (highlights)
+
 - Phase 2 (Implementation)
   - Done: VOI-14 Establish New Development Environment — https://linear.app/voidcatrdc/issue/VOI-14/establish-new-development-environment
   - In Progress: VOI-15 Build Rust Core Services — https://linear.app/voidcatrdc/issue/VOI-15/build-rust-core-services
@@ -79,14 +82,17 @@ Issues created/updated (highlights)
   - VOI-44 Repository Foundation & Development Environment — https://linear.app/voidcatrdc/issue/VOI-44/repository-foundation-and-development-environment
 
 Assumptions
+
 - Interpreted checked items as `Done`, “IN PROGRESS” annotation as `In Progress`, unchecked as `Todo`.
 - Mapped everything to team `VoidCatRDC` and tagged each with `ForbiddenLibrary` plus the appropriate `Phase` label.
 
 Next steps (optional)
+
 - Assign owners and due dates in Linear to drive the timeline.
 - If you want, I can back-link Linear issue IDs into your checklist markdown for traceability, or set up a tiny sync script to keep them in lockstep.
 
 Completion summary
+
 - Requirement: “Update Linear” — Done. Created project, labels, and issues with statuses that mirror the checklist; provided key links.
 
 ---
@@ -99,16 +105,13 @@ continue through phase 4
 
 _**Assistant**_
 
-Creating detailed Phase 4 sub-issues in Linear to fully flesh out packaging, signing, and release workflows with proper parent links, statuses, and labels. Creating detailed Phase 4 sub-issues for macOS/Linux packaging, release notes, distribution channel, version tagging, and CI release automation, all linked under their respective parent Phase 4 items. To execute Phase 4 implementation in-repo, I’ll add the release workflow, docs, and config scaffolding: a signed multi-OS GitHub Actions workflow, a key management policy, release notes template, README downloads section, a version bump script, and signing config placeholders in `tauri.conf.json`. To wire up Phase 4 in-repo, I’ll inspect `tauri.conf.json` to set correct signing placeholders and then add the release workflow, version bump script, and docs. I’ll inspect the current README to insert a Downloads section and then add the release workflow, docs, and version bump script to implement Phase 4 in the repo. To implement Phase 4 in the repository, I’ll read `package.json` so I can add a version bump script and wire it into scripts, then create a release workflow, key management policy, and release notes template, and update `tauri.conf.json` and `README.md`. I’m going to add the Phase 4 scaffolding to your repo: a multi-OS release workflow, key management policy, release notes template and draft, a version bump script wired into package.json, enable bundling in Tauri config, and a README downloads section. 
-```
-
-```
-I’m going to fix the Tauri config schema issues, add Phase 4 docs and a version bump script, and update the README with a Downloads section so Phase 4 is wired into the repo. 
-```
+Creating detailed Phase 4 sub-issues in Linear to fully flesh out packaging, signing, and release workflows with proper parent links, statuses, and labels. Creating detailed Phase 4 sub-issues for macOS/Linux packaging, release notes, distribution channel, version tagging, and CI release automation, all linked under their respective parent Phase 4 items. To execute Phase 4 implementation in-repo, I’ll add the release workflow, docs, and config scaffolding: a signed multi-OS GitHub Actions workflow, a key management policy, release notes template, README downloads section, a version bump script, and signing config placeholders in `tauri.conf.json`. To wire up Phase 4 in-repo, I’ll inspect `tauri.conf.json` to set correct signing placeholders and then add the release workflow, version bump script, and docs. I’ll inspect the current README to insert a Downloads section and then add the release workflow, docs, and version bump script to implement Phase 4 in the repo. To implement Phase 4 in the repository, I’ll read `package.json` so I can add a version bump script and wire it into scripts, then create a release workflow, key management policy, and release notes template, and update `tauri.conf.json` and `README.md`. I’m going to add the Phase 4 scaffolding to your repo: a multi-OS release workflow, key management policy, release notes template and draft, a version bump script wired into package.json, enable bundling in Tauri config, and a README downloads section.
 
 ```
 
 ```
+
+I’m going to fix the Tauri config schema issues, add Phase 4 docs and a version bump script, and update the README with a Downloads section so Phase 4 is wired into the repo.
 
 ```
 
@@ -123,6 +126,13 @@ I’m going to fix the Tauri config schema issues, add Phase 4 docs and a versio
 ```
 
 ```
+
+```
+
+```
+
+```
+
 To resolve schema issues and keep Tauri config valid while enabling bundling, I’ll simplify `tauri.conf.json` by removing unsupported signing keys and only toggling `bundle.active` to true; then I’ll add a draft `RELEASE_NOTES_v1.0.md`. [object Object]
 
 ---
@@ -135,13 +145,14 @@ _**User**_
 
 _**Assistant**_
 
-
 ```
 
 ```
+
 Pushing Phase 4 forward now: I created detailed Linear sub-issues and implemented repo-side release scaffolding so packaging, signing, and distribution can proceed.
 
 Plan
+
 - Create Phase 4 sub-issues in Linear (signing, packaging per OS, release prep)
 - Wire up release automation in-repo
 - Enable bundling and prep signing config placeholders
@@ -150,7 +161,8 @@ Plan
 
 What I did (Phase 4)
 
-1) Linear issues (Phase 4 detailed)
+1. Linear issues (Phase 4 detailed)
+
 - Added sub-issues under your Phase 4 parents to cover:
   - Windows code signing (.pfx) acquisition and storage — VOI-45
   - macOS Developer ID + notarization credentials — VOI-46
@@ -169,7 +181,8 @@ What I did (Phase 4)
   - Version bump & sync (Cargo, Tauri, package.json) — VOI-59
   - Create annotated tag v1.0.0 and push — VOI-60
 
-2) Release automation
+2. Release automation
+
 - Added GitHub Actions workflow `release.yml`
   - Triggers on tags (including RCs)
   - Builds Tauri app on Windows/macOS/Linux
@@ -181,17 +194,20 @@ What I did (Phase 4)
     - Linux: GPG key import
   - Note: Secrets must be added in your GitHub repo for full signing/notarization.
 
-3) Tauri configuration
+3. Tauri configuration
+
 - Enabled bundling in `tauri.conf.json` by toggling `"bundle.active": true`
 - Kept the schema valid by avoiding non-schema fields (signing-specific keys are handled via environment/secrets and build time, not the config)
 - Removed invalid `"theme": "auto"` error by using only supported keys
 
-4) Documentation
+4. Documentation
+
 - Added `POLICY_Key_Management.md` outlining issuance, storage, rotation, revocation, audit
 - Added `RELEASE_NOTES_TEMPLATE.md` with lint-safe formatting
 - Added `RELEASE_NOTES_v1.0.md` draft with system requirements and checksum instructions
 
-5) Version bump tooling
+5. Version bump tooling
+
 - Added `bump-version.mjs` to sync version across:
   - `package.json`
   - `tauri.conf.json` (`package.version`)
@@ -199,7 +215,8 @@ What I did (Phase 4)
 - Wired npm script:
   - `version:bump`: `node scripts/bump-version.mjs`
 
-6) README updates
+6. README updates
+
 - Added “Downloads” section with checksum verification commands for PowerShell and bash/zsh
 
 How to use
@@ -220,6 +237,7 @@ How to use
   - CI will build for all OSes, create checksums, and open a draft GitHub release with artifacts attached.
 
 Checkpoint summary (repo changes)
+
 - Added: `release.yml`
 - Edited: `tauri.conf.json` (enable bundling; schema-safe)
 - Added: `bump-version.mjs`
@@ -230,12 +248,14 @@ Checkpoint summary (repo changes)
 - Edited: `README.md` with Downloads section
 
 Quality gates (quick triage)
+
 - Build: Not run here; CI will verify on next push/tag
 - Lint: Markdown docs formatted to avoid common MD lint warnings
 - Unit tests: No changes to test suites; unaffected
 - Smoke: Bundling flag enabled; use `pnpm tauri build` locally to validate
 
 Next actions I can take
+
 - Add a minimal `.github/workflows/release-dryrun.yml` to validate build without signing
 - Add a `.github/workflows/ci-release.yml` that builds RCs from `-rc` tags with different channels
 - Wire `CHANGELOG.md` generation into release pipeline if you want automated changelogs
@@ -252,11 +272,13 @@ update current file
 
 _**Assistant**_
 
-I’m going to append a new change log entry in your current `AI-Comms.md` documenting the Phase 4 Linear sync and release scaffolding work, including the specific repo changes and next steps. 
+I’m going to append a new change log entry in your current `AI-Comms.md` documenting the Phase 4 Linear sync and release scaffolding work, including the specific repo changes and next steps.
+
 ```
 
 ```
-I’m going to open the current `AI-Comms.md` to fix markdown lint errors (duplicate heading, list spacing/indentation, and blanks around headings/lists) in the newly added section. I will apply a set of precise Markdown edits to `AI-Comms.md` to resolve lint errors by making duplicate headings unique, adding required blank lines around lists and headings, and normalizing nested list indentation. 
+
+I’m going to open the current `AI-Comms.md` to fix markdown lint errors (duplicate heading, list spacing/indentation, and blanks around headings/lists) in the newly added section. I will apply a set of precise Markdown edits to `AI-Comms.md` to resolve lint errors by making duplicate headings unique, adding required blank lines around lists and headings, and normalizing nested list indentation.
 
 ---
 
@@ -268,7 +290,6 @@ _**User**_
 
 _**Assistant**_
 
-
 ```
 
 ```
@@ -284,9 +305,11 @@ _**Assistant**_
 ```
 
 ```
+
 I’ll quickly check `package.json` to confirm the exact version bump script name and its usage so I can provide accurate RC tagging commands. I’ll open `bump-version.mjs` to confirm how to invoke it (argument format) so I can provide exact RC bump commands. I’ll tidy up the AI-Comms log formatting and set you up for a clean release candidate dry run with Windows-friendly commands next.
 
 ## What I changed
+
 - Fixed Markdown lint issues in `AI-Comms.md`:
   - Resolved duplicate heading by renaming the Phase 4 entry to “GitHub Copilot (Phase 4 Release Automation)”.
   - Added required blank lines around headings and lists (MD022/MD032).
@@ -295,41 +318,46 @@ I’ll quickly check `package.json` to confirm the exact version bump script nam
   - Restored the missing “GitHub Copilot - Expert Programming Assistant & Repo Integrator” heading and restructured the “Project Change Log” section to be lint-compliant.
 
 ## Quick next steps
+
 - Configure signing/notarization secrets (GitHub → Settings → Secrets and variables → Actions):
   - Windows: `WIN_CERT_PFX` (base64), `WIN_CERT_PASSWORD`
   - macOS: `APPLE_CERTIFICATE` (base64 `.p12`), `APPLE_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`
   - Linux: `GPG_PRIVATE_KEY` (base64), `GPG_PASSPHRASE`
 - Optional RC dry run to validate CI:
-  1) Install and lint locally:
+  1. Install and lint locally:
      - `pnpm install`
      - `pnpm lint`
      - `pnpm test`
      - `cargo check`
      - `cargo test`
-  2) Bump to an RC version using the script you have:
+  2. Bump to an RC version using the script you have:
      - `pnpm run version:bump 2.0.0-rc.1` (or pick the desired target, e.g., `2.0.1-rc.1`)
-  3) Commit and tag (PowerShell-safe sequence):
+  3. Commit and tag (PowerShell-safe sequence):
      - `git add -A`
      - `git commit -m "chore(release): bump version to 2.0.0-rc.1"`
      - `git tag v2.0.0-rc.1`
      - `git push`
      - `git push origin v2.0.0-rc.1`
-  4) CI will build artifacts for Windows/macOS/Linux, calculate SHA256 checksums, and open a draft GitHub Release.
+  4. CI will build artifacts for Windows/macOS/Linux, calculate SHA256 checksums, and open a draft GitHub Release.
 
 Notes:
+
 - Your current `package.json` version is `2.0.0`. If you intend the first stable to be `2.0.0`, an RC of `2.0.0-rc.1` is consistent. The docs currently include `RELEASE_NOTES_v1.0.md`; consider aligning that to `v2.0` when you finalize (low-risk doc rename).
 
 ## Completion summary
+
 - AI-Comms formatting issues: Done (blank lines, list indentation, trailing spaces, duplicate heading resolved).
 - Release RC guidance: Provided PowerShell-compatible commands and version bump usage (`pnpm run version:bump <new-version>`).
 - Secrets configuration: Listed required keys per platform.
 
 How to run locally (PowerShell):
+
 - `pnpm install`
 - `pnpm lint ; pnpm test`
 - `cargo check ; cargo test`
 
 If you want, I can also:
+
 - Align the release notes filename and references to `v2.0.0`.
 - Kick off a version bump + tag for an RC in a single patch and prep a PR description.
 
@@ -343,7 +371,4 @@ Review Docs and overall project, update checklist and all relevant documentation
 
 _**Assistant**_
 
-
-
 ---
-

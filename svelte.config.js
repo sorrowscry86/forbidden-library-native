@@ -9,7 +9,7 @@ try {
   adapter = function adapterStaticFallback() {
     return {
       name: 'adapter-static-fallback',
-      adapt: () => {}
+      adapt: () => {},
     };
   };
 }
@@ -34,14 +34,14 @@ const config = {
       fallback: 'index.html',
       precompress: false,
       // Keep strict; fallback handles dynamic routes for SPA-style apps
-      strict: true
+      strict: true,
     }),
 
     // Prefer SPA + CSR inside Tauri; keep prerender warnings non-fatal
     prerender: {
-      handleHttpError: 'warn'
-    }
-  }
+      handleHttpError: 'warn',
+    },
+  },
 };
 
 export default config;

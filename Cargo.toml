@@ -13,6 +13,7 @@ edition = "2021"
 [workspace.dependencies]
 # Tauri dependencies
 tauri = { version = "1.5", features = [
+  "app-all",
   "clipboard-all",
   "dialog-ask",
   "dialog-confirm",
@@ -29,13 +30,19 @@ tauri = { version = "1.5", features = [
   "fs-rename-file",
   "fs-write-file",
   "global-shortcut-all",
+  "notification-all",
+  "os-all",
   "path-all",
   "shell-open",
-  "system-tray",
+
+  "updater",
+  "window-center",
   "window-close",
   "window-hide",
   "window-maximize",
   "window-minimize",
+  "window-print",
+  "window-request-user-attention",
   "window-set-always-on-top",
   "window-set-decorations",
   "window-set-focus",
@@ -44,11 +51,11 @@ tauri = { version = "1.5", features = [
   "window-set-max-size",
   "window-set-min-size",
   "window-set-position",
+  "window-set-resizable",
   "window-set-size",
   "window-set-skip-taskbar",
   "window-set-title",
   "window-show",
-  "window-start-dragging",
   "window-unmaximize",
   "window-unminimize"
 ] }

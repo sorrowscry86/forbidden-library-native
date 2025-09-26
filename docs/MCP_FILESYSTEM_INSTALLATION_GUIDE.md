@@ -5,6 +5,7 @@
 The Morph MCP Server provides lightning-fast AI code editing capabilities through the Model Context Protocol (MCP). This guide covers complete installation, configuration, and setup for various MCP-compatible clients.
 
 **Key Features:**
+
 - **Lightning Fast**: 4500+ tokens/sec code editing
 - **High Accuracy**: 98% success rate on code transformations
 - **Flexible Tools**: Choose between edit-only or full filesystem access
@@ -13,11 +14,13 @@ The Morph MCP Server provides lightning-fast AI code editing capabilities throug
 ## Prerequisites
 
 ### Required Software
+
 - **Node.js** (version 16 or higher)
 - **npm** or **npx** (comes with Node.js)
 - **Morph API Key** (get from [morphllm.com](https://morphllm.com/dashboard/api-keys))
 
 ### Supported Clients
+
 - Claude Desktop
 - Cursor
 - VS Code (with MCP extension)
@@ -35,6 +38,7 @@ The Morph MCP Server provides lightning-fast AI code editing capabilities throug
 ### Step 2: Choose Your Configuration Mode
 
 #### Option A: Edit-Only Mode (Recommended for Security)
+
 Fast file editing only with the `edit_file` tool:
 
 ```json
@@ -53,6 +57,7 @@ Fast file editing only with the `edit_file` tool:
 ```
 
 #### Option B: Full Access Mode
+
 Complete filesystem access with all available tools:
 
 ```json
@@ -82,10 +87,7 @@ Complete filesystem access with all available tools:
   "mcpServers": {
     "filesystem-with-morph": {
       "command": "npx",
-      "args": [
-        "@morph-llm/morph-fast-apply",
-        "/Users/your-username/"
-      ],
+      "args": ["@morph-llm/morph-fast-apply", "/Users/your-username/"],
       "env": {
         "MORPH_API_KEY": "your-api-key-here",
         "ALL_TOOLS": "true"
@@ -106,10 +108,7 @@ Complete filesystem access with all available tools:
   "mcpServers": {
     "filesystem-with-morph": {
       "command": "npx",
-      "args": [
-        "@morph-llm/morph-fast-apply",
-        "/Users/your-username/"
-      ],
+      "args": ["@morph-llm/morph-fast-apply", "/Users/your-username/"],
       "env": {
         "MORPH_API_KEY": "your-api-key-here",
         "ALL_TOOLS": "true"
@@ -128,10 +127,7 @@ Complete filesystem access with all available tools:
   "mcpServers": {
     "filesystem-with-morph": {
       "command": "npx",
-      "args": [
-        "@morph-llm/morph-fast-apply",
-        "/Users/your-username/"
-      ],
+      "args": ["@morph-llm/morph-fast-apply", "/Users/your-username/"],
       "env": {
         "MORPH_API_KEY": "your-api-key-here",
         "ALL_TOOLS": "true"
@@ -152,6 +148,7 @@ The Morph MCP Server now supports **workspace-aware global configuration** by de
 ### How Workspace Mode Works
 
 The server automatically detects workspace roots by looking for:
+
 - `.git` directories
 - `package.json`, `Cargo.toml`, `pyproject.toml`
 - `.vscode`, `.cursor` directories
@@ -194,11 +191,11 @@ If you need to disable workspace mode:
 
 ## Environment Variables
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `MORPH_API_KEY` | Your Morph API key | Yes | None |
-| `ALL_TOOLS` | Enable full filesystem access | No | "false" |
-| `ENABLE_WORKSPACE_MODE` | Enable workspace detection | No | "true" |
+| Variable                | Description                   | Required | Default |
+| ----------------------- | ----------------------------- | -------- | ------- |
+| `MORPH_API_KEY`         | Your Morph API key            | Yes      | None    |
+| `ALL_TOOLS`             | Enable full filesystem access | No       | "false" |
+| `ENABLE_WORKSPACE_MODE` | Enable workspace detection    | No       | "true"  |
 
 ## Testing Your Installation
 
@@ -242,10 +239,7 @@ Limit the MCP server to specific directories:
   "mcpServers": {
     "filesystem-with-morph": {
       "command": "npx",
-      "args": [
-        "@morph-llm/morph-fast-apply",
-        "/Users/your-username/projects/specific-project/"
-      ],
+      "args": ["@morph-llm/morph-fast-apply", "/Users/your-username/projects/specific-project/"],
       "env": {
         "MORPH_API_KEY": "your-api-key-here",
         "ALL_TOOLS": "false"
@@ -291,6 +285,7 @@ Run different MCP servers for different projects:
 **Symptoms**: MCP tools don't appear in your AI assistant
 
 **Solutions**:
+
 1. Check that your client supports MCP servers
 2. Verify your config file syntax is correct (JSON must be valid)
 3. Restart your client completely (quit and reopen)
@@ -303,6 +298,7 @@ Run different MCP servers for different projects:
 **Symptoms**: Authentication failures or API key errors
 
 **Solutions**:
+
 1. Verify your API key is correct in the environment variables
 2. Ensure the key starts with 'sk-'
 3. Check that the key has the right permissions
@@ -314,6 +310,7 @@ Run different MCP servers for different projects:
 **Symptoms**: Cannot access files or directories
 
 **Solutions**:
+
 1. Check that the path in the config is correct
 2. Verify you have read/write permissions to the directory
 3. Try with `ALL_TOOLS: "false"` first to test basic editing
@@ -324,6 +321,7 @@ Run different MCP servers for different projects:
 **Symptoms**: Cannot install or run the MCP server
 
 **Solutions**:
+
 1. Ensure Node.js and npm are installed
 2. Try installing globally: `npm install -g @morph-llm/morph-fast-apply`
 3. Check npm permissions
@@ -334,12 +332,14 @@ Run different MCP servers for different projects:
 If you're experiencing issues, follow this diagnostic workflow:
 
 1. **Check Package Installation**:
+
    ```bash
    npm install -g @morph-llm/morph-fast-apply
    npx @morph-llm/morph-fast-apply --help
    ```
 
 2. **Test API Key**:
+
    ```bash
    export MORPH_API_KEY="your-api-key-here"
    npx @morph-llm/morph-fast-apply /tmp/
@@ -360,11 +360,13 @@ If you're experiencing issues, follow this diagnostic workflow:
 ### Recommended Security Settings
 
 1. **Use Edit-Only Mode for Untrusted Environments**:
+
    ```json
    "ALL_TOOLS": "false"
    ```
 
 2. **Limit Directory Scope**:
+
    ```json
    "args": ["@morph-llm/morph-fast-apply", "/specific/project/path/"]
    ```
@@ -443,6 +445,7 @@ Once your installation is complete and verified:
 The Morph MCP Server provides powerful, fast, and secure file editing capabilities through the Model Context Protocol. By following this installation guide and best practices, you'll have a robust setup that enhances your AI-assisted development workflow.
 
 Remember to:
+
 - Keep your API keys secure
 - Monitor your usage
 - Use appropriate security settings

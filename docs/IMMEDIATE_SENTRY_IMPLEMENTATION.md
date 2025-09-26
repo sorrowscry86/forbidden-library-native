@@ -1,4 +1,5 @@
 # Immediate Sentry Implementation Guide
+
 ## Step-by-Step Backend Integration
 
 **Date:** August 21, 2025  
@@ -26,6 +27,7 @@
 ### **Step 2: Add Sentry Dependencies**
 
 **Update `src-tauri/Cargo.toml`:**
+
 ```toml
 [dependencies]
 sentry = "0.35"
@@ -38,6 +40,7 @@ sentry-test = "0.35"
 ```
 
 **Update `package.json`:**
+
 ```json
 {
   "dependencies": {
@@ -50,6 +53,7 @@ sentry-test = "0.35"
 ### **Step 3: Backend Integration**
 
 **Update `src-tauri/src/main.rs`:**
+
 ```rust
 use sentry::{init, ClientOptions};
 use sentry_tauri::sentry;
@@ -89,6 +93,7 @@ async fn main() {
 ### **Step 4: Service Layer Integration**
 
 **Update `src-tauri/src/services/mod.rs`:**
+
 ```rust
 use sentry::{add_breadcrumb, Breadcrumb};
 use tracing::{info, error, warn, instrument};
@@ -103,9 +108,9 @@ pub async fn create_conversation(&self, title: String) -> Result<Conversation, B
     });
 
     let start_time = std::time::Instant::now();
-    
+
     let result = self.database_manager.create_conversation(&title).await;
-    
+
     let duration = start_time.elapsed();
     if duration.as_millis() > 100 {
         warn!("Slow conversation creation: {}ms", duration.as_millis());
@@ -128,6 +133,7 @@ pub async fn create_conversation(&self, title: String) -> Result<Conversation, B
 ### **Step 5: IPC Command Integration**
 
 **Update `src-tauri/src/commands.rs`:**
+
 ```rust
 use sentry::{add_breadcrumb, Breadcrumb};
 use tracing::{info, error, instrument};
@@ -146,9 +152,9 @@ pub async fn create_conversation(
     });
 
     let start_time = std::time::Instant::now();
-    
+
     let result = state.conversation_service.create_conversation(title).await;
-    
+
     let duration = start_time.elapsed();
     if duration.as_millis() > 50 {
         warn!("Slow IPC command: {}ms", duration.as_millis());
@@ -171,6 +177,7 @@ pub async fn create_conversation(
 ### **Step 6: Performance Monitoring**
 
 **Create `src-tauri/src/monitoring.rs`:**
+
 ```rust
 use sentry::{add_breadcrumb, Breadcrumb, start_transaction};
 use tracing::{info, error, warn};
@@ -183,12 +190,12 @@ impl PerformanceMonitor {
             Some("app.startup".into()),
             Some("app.startup".into()),
         );
-        
+
         // Measure startup time
         let start_time = std::time::Instant::now();
-        
+
         // Your startup logic here
-        
+
         let duration = start_time.elapsed();
         if duration.as_millis() > 1000 {
             error!("Startup time exceeded 1 second: {}ms", duration.as_millis());
@@ -199,7 +206,7 @@ impl PerformanceMonitor {
         } else {
             info!("Startup time: {}ms", duration.as_millis());
         }
-        
+
         transaction.finish();
     }
 
@@ -211,15 +218,15 @@ impl PerformanceMonitor {
             Some(format!("db.{}", operation).into()),
             Some("db.operation".into()),
         );
-        
+
         let start_time = std::time::Instant::now();
         let result = f();
         let duration = start_time.elapsed();
-        
+
         if duration.as_millis() > 50 {
             warn!("Slow database operation {}: {}ms", operation, duration.as_millis());
         }
-        
+
         transaction.finish();
         result
     }
@@ -229,6 +236,7 @@ impl PerformanceMonitor {
 ### **Step 7: Environment Configuration**
 
 **Create `.env` file:**
+
 ```env
 SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
 ENVIRONMENT=development
@@ -237,6 +245,7 @@ SENTRY_PROFILES_SAMPLE_RATE=1.0
 ```
 
 **Update `src-tauri/tauri.conf.json`:**
+
 ```json
 {
   "tauri": {
@@ -255,6 +264,7 @@ SENTRY_PROFILES_SAMPLE_RATE=1.0
 ## **Testing Sentry Integration**
 
 ### **Test Error Reporting**
+
 ```rust
 #[tauri::command]
 pub fn test_sentry_error() -> Result<(), String> {
@@ -264,6 +274,7 @@ pub fn test_sentry_error() -> Result<(), String> {
 ```
 
 ### **Test Performance Monitoring**
+
 ```rust
 #[tauri::command]
 pub fn test_performance() -> Result<(), String> {
@@ -287,4 +298,3 @@ pub fn test_performance() -> Result<(), String> {
 ---
 
 **This implementation provides immediate error tracking and performance monitoring for the Rust backend, establishing the foundation for comprehensive application monitoring.**
-

@@ -25,13 +25,23 @@ impl ConversationService {
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
         )?;
 
-        stmt.execute([
+        let persona_id_sql: Box<dyn rusqlite::ToSql> = match conversation.persona_id {
+            Some(id) => Box::new(id),
+            None => Box::new(rusqlite::types::Null),
+        };
+
+        let persona_id_sql: Box<dyn rusqlite::ToSql> = match conversation.persona_id {
+            Some(id) => Box::new(id),
+            None => Box::new(rusqlite::types::Null),
+        };
+
+        stmt.execute(rusqlite::params![
             &uuid_str,
             &conversation.title,
-            &conversation.persona_id.map(|id| id.to_string()).unwrap_or_default(),
+            &conversation.persona_id,
             &conversation.created_at.to_rfc3339(),
             &conversation.updated_at.to_rfc3339(),
-            &conversation.archived.to_string(),
+            &conversation.archived,
         ])?;
 
         let id = conn.last_insert_rowid();

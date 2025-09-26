@@ -2,7 +2,7 @@
   "root": true,
   "extends": [
     "eslint:recommended",
-    "@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended",
     "plugin:svelte/recommended",
     "prettier"
   ],
@@ -36,10 +36,5 @@
     "svelte/no-at-html-tags": "error",
     "svelte/no-target-blank": "error"
   },
-  "ignorePatterns": [
-    "build/",
-    ".svelte-kit/",
-    "dist/",
-    "src-tauri/"
-  ]
+  "ignorePatterns": ["build/", ".svelte-kit/", "dist/", "src-tauri/"]
 }

@@ -4,176 +4,178 @@
 
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
-	width: 8px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-	background: #374151;
+  background: #374151;
 }
 
 ::-webkit-scrollbar-thumb {
-	background: #6b7280;
-	border-radius: 4px;
+  background: #6b7280;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: #9ca3af;
+  background: #9ca3af;
 }
 
 /* Custom styles for the app */
-html, body {
-	height: 100%;
-	margin: 0;
-	padding: 0;
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 #svelte {
-	height: 100%;
+  height: 100%;
 }
 
 /* Smooth transitions */
 * {
-	transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-	transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-	transition-duration: 150ms;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
 /* Focus styles */
 button:focus,
 input:focus,
 textarea:focus {
-	outline: 2px solid #8b5cf6;
-	outline-offset: 2px;
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
 }
 
 /* Custom button styles */
 .btn-primary {
-	@apply bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors;
+  @apply bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors;
 }
 
 .btn-secondary {
-	@apply bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors;
+  @apply bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors;
 }
 
 .btn-danger {
-	@apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors;
+  @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors;
 }
 
 /* Custom input styles */
 .input-primary {
-	@apply bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent;
+  @apply bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent;
 }
 
 /* Animation classes */
 .fade-in {
-	animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 @keyframes fadeIn {
-	from {
-		opacity: 0;
-		transform: translateY(10px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .slide-in-right {
-	animation: slideInRight 0.3s ease-in-out;
+  animation: slideInRight 0.3s ease-in-out;
 }
 
 @keyframes slideInRight {
-	from {
-		opacity: 0;
-		transform: translateX(20px);
-	}
-	to {
-		opacity: 1;
-		transform: translateX(0);
-	}
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Loading spinner */
 .spinner {
-	@apply animate-spin rounded-full border-b-2 border-purple-600;
+  @apply animate-spin rounded-full border-b-2 border-purple-600;
 }
 
 /* Message bubble animations */
 .message-bubble {
-	animation: messageSlideIn 0.3s ease-out;
+  animation: messageSlideIn 0.3s ease-out;
 }
 
 @keyframes messageSlideIn {
-	from {
-		opacity: 0;
-		transform: translateY(10px) scale(0.95);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0) scale(1);
-	}
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Hover effects */
 .hover-lift {
-	transition: transform 0.2s ease-in-out;
+  transition: transform 0.2s ease-in-out;
 }
 
 .hover-lift:hover {
-	transform: translateY(-2px);
+  transform: translateY(-2px);
 }
 
 /* Dark theme overrides */
-[data-theme="dark"] {
-	color-scheme: dark;
+[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 /* Custom selection colors */
 ::selection {
-	background-color: #8b5cf6;
-	color: white;
+  background-color: #8b5cf6;
+  color: white;
 }
 
 /* Responsive design helpers */
 @media (max-width: 768px) {
-	.mobile-hidden {
-		display: none;
-	}
+  .mobile-hidden {
+    display: none;
+  }
 }
 
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
-	*,
-	*::before,
-	*::after {
-		animation-duration: 0.01ms !important;
-		animation-iteration-count: 1 !important;
-		transition-duration: 0.01ms !important;
-	}
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-	.bg-gray-700 {
-		background-color: #000000;
-	}
+  .bg-gray-700 {
+    background-color: #000000;
+  }
 
-	.bg-gray-800 {
-		background-color: #000000;
-	}
+  .bg-gray-800 {
+    background-color: #000000;
+  }
 
-	.bg-gray-900 {
-		background-color: #000000;
-	}
+  .bg-gray-900 {
+    background-color: #000000;
+  }
 
-	.text-gray-300 {
-		color: #ffffff;
-	}
+  .text-gray-300 {
+    color: #ffffff;
+  }
 
-	.text-gray-400 {
-		color: #ffffff;
-	}
+  .text-gray-400 {
+    color: #ffffff;
+  }
 }

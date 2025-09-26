@@ -4,7 +4,7 @@
 
 ### Scenario: Setting up a new React project structure
 
-```json
+````json
 // 1. Check access permissions
 {"random_string": "check"}
 
@@ -33,7 +33,7 @@
   "path": "/absolute/path/react-project/src/App.js",
   "content": "import React from 'react';\n\nfunction App() {\n  return (\n    <div className=\"App\">\n      <h1>Hello World</h1>\n    </div>\n  );\n}\n\nexport default App;"
 }
-```
+````
 
 ## Example 2: Code Review and Analysis
 

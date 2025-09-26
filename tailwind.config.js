@@ -30,11 +30,11 @@ export default {
           800: '#922c22',
           900: '#76271f',
           950: '#40110e',
-        }
+        },
       },
       fontFamily: {
-        'mono': ['Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'monospace'],
-        'sans': ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.2s ease-in-out',
@@ -53,23 +53,20 @@ export default {
         pulseGlow: {
           '0%, 100%': {
             boxShadow: '0 0 5px rgba(81, 115, 255, 0.5)',
-            transform: 'scale(1)'
+            transform: 'scale(1)',
           },
           '50%': {
             boxShadow: '0 0 20px rgba(81, 115, 255, 0.8)',
-            transform: 'scale(1.05)'
+            transform: 'scale(1.05)',
           },
-        }
+        },
       },
       boxShadow: {
-        'forbidden': '0 4px 14px 0 rgba(236, 100, 52, 0.25)',
-        'voidcat': '0 4px 14px 0 rgba(81, 115, 255, 0.25)',
-      }
+        forbidden: '0 4px 14px 0 rgba(236, 100, 52, 0.25)',
+        voidcat: '0 4px 14px 0 rgba(81, 115, 255, 0.25)',
+      },
     },
   },
-  plugins: [
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/forms'),
-  ],
+  plugins: [require('@tailwindcss/typography'), require('@tailwindcss/forms')],
   darkMode: 'class',
-}
+};

@@ -1,8 +1,19 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import { sentrySvelteKit } from '@sentry/sveltekit';
 
 export default defineConfig(async () => ({
-  plugins: [sveltekit()],
+  plugins: [
+    sentrySvelteKit({
+      sourceMapsUploadOptions: {
+        org: 'voidcat-rdc',
+        project: 'forbidden-library-native',
+        authToken: process.env.SENTRY_AUTH_TOKEN || '',  // Use environment variable
+      },
+      telemetry: false,  // Disable telemetry if not needed
+    }),
+    sveltekit(),
+  ],
 
   // Vite options tailored for Tauri development
   clearScreen: false,
@@ -13,16 +24,16 @@ export default defineConfig(async () => ({
     strictPort: true,
     watch: {
       // 3. tell vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      ignored: ['**/src-tauri/**'],
     },
   },
 
   // Build options for production
   build: {
     // Tauri supports es2021
-    target: process.env.TAURI_PLATFORM == "windows" ? "chrome105" : "safari13",
+    target: process.env.TAURI_PLATFORM == 'windows' ? 'chrome105' : 'safari13',
     // don't minify for debug builds
-    minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
+    minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
     // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_DEBUG,
   },
@@ -33,6 +44,6 @@ export default defineConfig(async () => ({
   },
 
   test: {
-    include: ['src/**/*.{test,spec}.{js,ts}']
-  }
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+  },
 }));

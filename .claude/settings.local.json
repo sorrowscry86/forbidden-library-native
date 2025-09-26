@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src\\lib\\utils/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src\\lib\\utils/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src-tauri\\src/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src-tauri\\src/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src\\routes/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src\\routes/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src\\routes/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src\\routes/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src\\routes/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src-tauri/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework\\src\\routes/**)",
+      "Read(/D:\\Clones\\GitHub\\TechData\\ForbiddenLibraryRework/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

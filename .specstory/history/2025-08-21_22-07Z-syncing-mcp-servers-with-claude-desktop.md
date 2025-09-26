@@ -4,7 +4,7 @@
 
 _**User**_
 
-Can you sync cursor's MCP servers to use CLaude desktop's? 
+Can you sync cursor's MCP servers to use CLaude desktop's?
 
 C:\Users\Wykeve\.cursor\mcp.json
 
@@ -12,7 +12,6 @@ C:\Users\Wykeve\.cursor\mcp.json
 
 _**Assistant**_
 
-I'll help you sync Cursor's MCP servers to use Claude Desktop's configuration. First, let me check the current Cursor MCP configuration and then examine Claude Desktop's configuration to understand what needs to be synced. I need to read the file using the terminal since it's outside the 
+I'll help you sync Cursor's MCP servers to use Claude Desktop's configuration. First, let me check the current Cursor MCP configuration and then examine Claude Desktop's configuration to understand what needs to be synced. I need to read the file using the terminal since it's outside the
 
 ---
-

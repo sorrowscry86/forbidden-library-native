@@ -1,0 +1,162 @@
+# GitHub Copilot Configuration for Forbidden Library
+# VoidCat RDC - Native Desktop Application (Rust/Tauri + SvelteKit)
+
+# Project Context and Guidelines
+project:
+  name: "Forbidden Library - Native Desktop Application"
+  description: "High-performance desktop application built with Rust/Tauri backend and SvelteKit frontend"
+  architecture: "Native desktop app with encrypted SQLite database, local-first design"
+  performance_goals:
+    - "Sub-second launch time"
+    - "60 FPS UI responsiveness"
+    - "Negligible idle consumption"
+
+# Technology Stack Guidelines
+tech_stack:
+  backend:
+    primary: "Rust"
+    framework: "Tauri"
+    database: "SQLite with WAL journaling, SQLCipher encryption"
+    orm: "Drizzle ORM"
+    async_runtime: "Tokio"
+    error_handling: "thiserror crate for comprehensive error types"
+
+  frontend:
+    primary: "SvelteKit"
+    language: "TypeScript"
+    styling: "Tailwind CSS"
+    build_tool: "Vite"
+    adapter: "@sveltejs/adapter-static (SPA mode)"
+
+  tooling:
+    package_manager: "pnpm (frontend), cargo (backend)"
+    linting: "ESLint (frontend), clippy (backend)"
+    formatting: "Prettier (frontend), rustfmt (backend)"
+    testing: "Vitest (frontend), cargo test (backend)"
+
+# Coding Standards and Patterns
+coding_standards:
+  rust:
+    error_handling: "Use AppError enum with thiserror, AppResult<T> type alias"
+    database: "Connection pooling with r2d2, repository pattern for data access"
+    architecture: "Service provider pattern with dependency injection"
+    async: "Use tokio::join! for parallel operations"
+    validation: "Centralized validation module for all inputs"
+
+  typescript:
+    api_client: "Typed API client with consistent error handling"
+    state_management: "Svelte stores with derived stores for computed values"
+    performance: "Virtualized lists for large datasets, lazy loading components"
+    caching: "Client-side caching with TTL for read operations"
+
+  general:
+    commits: "Atomic commits with descriptive messages following conventional commits"
+    testing: "Unit tests with >80% coverage, integration tests for APIs"
+    documentation: "README with setup instructions, inline docs for complex algorithms"
+    security: "Input validation, parameterized queries, OWASP Top 10 compliance"
+
+# Architecture Patterns
+patterns:
+  backend:
+    - "Repository pattern for data access layer"
+    - "Service provider for dependency injection"
+    - "Command pattern for Tauri IPC handlers"
+    - "Factory pattern for database configuration"
+
+  frontend:
+    - "Component composition over inheritance"
+    - "Store pattern for state management"
+    - "Observer pattern with Svelte reactivity"
+    - "Facade pattern for API abstraction"
+
+# Performance Guidelines
+performance:
+  database:
+    - "Use connection pooling instead of single mutex-protected connection"
+    - "Implement prepared statement caching for frequent queries"
+    - "Batch operations within transactions"
+    - "Conditional VACUUM based on fragmentation metrics"
+
+  ipc:
+    - "Consolidate fine-grained commands into batch operations"
+    - "Implement streaming for large responses"
+    - "Optimize serialization/deserialization"
+    - "Add request batching and response caching"
+
+  ui:
+    - "Virtualize long lists (conversations, messages)"
+    - "Lazy load non-critical components"
+    - "Use derived stores and memoization"
+    - "Defer non-essential asset loading"
+
+# Security Guidelines
+security:
+  - "All user inputs must be validated in backend validation module"
+  - "Use parameterized queries to prevent SQL injection"
+  - "Encrypt database with SQLCipher"
+  - "Implement proper error handling to avoid information leakage"
+  - "Follow OWASP Top 10 guidelines"
+  - "Local-first architecture for privacy"
+
+# File Organization
+file_structure:
+  rust_backend: "src-tauri/src/"
+  frontend: "src/"
+  docs: "docs/"
+  scripts: "scripts/"
+  configs: "Root level configuration files"
+
+# Development Workflow
+workflow:
+  branches: "Gitflow model: main (stable), develop (integration), feature/* (new features)"
+  pull_requests: "Required for all changes, must pass CI/CD checks"
+  testing: "Run tests before commits, maintain coverage above 80%"
+  tasks: "Use VS Code tasks for common operations (build, test, dev server)"
+
+# Common Commands and Tasks
+tasks:
+  install_deps: "pnpm install (frontend), cargo build (backend)"
+  dev_server: "pnpm run dev (frontend), cargo tauri dev (full app)"
+  build: "pnpm run build (frontend), cargo tauri build (production)"
+  test: "pnpm run test (frontend), cargo test (backend)"
+  lint: "pnpm run lint (frontend), cargo clippy (backend)"
+  format: "pnpm run format (frontend), cargo fmt (backend)"
+
+# Integration Guidelines
+integrations:
+  sentry: "Error tracking and performance monitoring"
+  github_actions: "CI/CD pipeline for testing and releases"
+  vs_code: "Recommended IDE with specific extensions listed in README"
+
+# Common Pitfalls to Avoid
+avoid:
+  - "Tauri State<T> manual construction (use parameter injection)"
+  - "Single database connection with mutex (use connection pooling)"
+  - "Inconsistent error types (use unified AppError enum)"
+  - "Direct database access from services (use repository pattern)"
+  - "Rendering large lists without virtualization"
+  - "Synchronous operations that could be parallelized"
+  - "Magic numbers and hardcoded values"
+  - "Missing input validation"
+
+# Priority Implementation Order
+priority_order:
+  critical:
+    - "Error handling system (AppError enum)"
+    - "Database connection pooling"
+    - "Repository pattern implementation"
+    - "Input validation module"
+  high:
+    - "IPC command consolidation"
+    - "API client refactoring"
+    - "Pagination standardization"
+    - "Prepared statement caching"
+  medium:
+    - "Virtualized lists"
+    - "Lazy initialization"
+    - "Batch operations"
+    - "Streaming for large data"
+  low:
+    - "Benchmark expansion"
+    - "Telemetry implementation"
+    - "Logging optimization"

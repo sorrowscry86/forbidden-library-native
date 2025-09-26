@@ -45,57 +45,57 @@ const DEFAULT_RECOVERY_STRATEGIES: Record<ErrorCategory, RecoveryStrategy> = {
     maxRetries: 3,
     backoffMs: 1000,
     autoRecover: true,
-    userNotification: true
+    userNotification: true,
   },
   [ErrorCategory.TIMEOUT]: {
     category: ErrorCategory.TIMEOUT,
     maxRetries: 2,
     backoffMs: 2000,
     autoRecover: true,
-    userNotification: false
+    userNotification: false,
   },
   [ErrorCategory.NETWORK]: {
     category: ErrorCategory.NETWORK,
     maxRetries: 5,
     backoffMs: 3000,
     autoRecover: true,
-    userNotification: true
+    userNotification: true,
   },
   [ErrorCategory.ENVIRONMENT]: {
     category: ErrorCategory.ENVIRONMENT,
     maxRetries: 0,
     backoffMs: 0,
     autoRecover: false,
-    userNotification: true
+    userNotification: true,
   },
   [ErrorCategory.VALIDATION]: {
     category: ErrorCategory.VALIDATION,
     maxRetries: 0,
     backoffMs: 0,
     autoRecover: false,
-    userNotification: true
+    userNotification: true,
   },
   [ErrorCategory.DATA]: {
     category: ErrorCategory.DATA,
     maxRetries: 1,
     backoffMs: 1000,
     autoRecover: true,
-    userNotification: true
+    userNotification: true,
   },
   [ErrorCategory.PERMISSION]: {
     category: ErrorCategory.PERMISSION,
     maxRetries: 0,
     backoffMs: 0,
     autoRecover: false,
-    userNotification: true
+    userNotification: true,
   },
   [ErrorCategory.UNKNOWN]: {
     category: ErrorCategory.UNKNOWN,
     maxRetries: 1,
     backoffMs: 1000,
     autoRecover: false,
-    userNotification: true
-  }
+    userNotification: true,
+  },
 };
 
 // Create enhanced error store
@@ -112,11 +112,11 @@ function createEnhancedErrorStore() {
       recoveryRate: 0,
       topErrorCommands: {},
       retryAttempts: {},
-      successfulRetries: {}
+      successfulRetries: {},
     },
     recoveryStrategies: DEFAULT_RECOVERY_STRATEGIES,
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-    systemHealth: 'healthy'
+    systemHealth: 'healthy',
   };
 
   const { subscribe, update, set }: Writable<EnhancedErrorStoreState> = writable(initialState);
@@ -129,12 +129,12 @@ function createEnhancedErrorStore() {
   function setupOnlineTracking() {
     if (typeof window !== 'undefined') {
       onlineListener = () => {
-        update(state => ({ ...state, isOnline: true }));
+        update((state) => ({ ...state, isOnline: true }));
         console.log('Network connection restored');
       };
 
       offlineListener = () => {
-        update(state => ({ ...state, isOnline: false }));
+        update((state) => ({ ...state, isOnline: false }));
         console.warn('Network connection lost');
       };
 
@@ -147,25 +147,32 @@ function createEnhancedErrorStore() {
   function calculateErrorRate(errors: AppError[]): number {
     const now = Date.now();
     const oneMinuteAgo = now - 60000;
-    const recentErrors = errors.filter(error => error.timestamp > oneMinuteAgo);
+    const recentErrors = errors.filter((error) => error.timestamp > oneMinuteAgo);
     return recentErrors.length;
   }
 
   // Calculate recovery rate
   function calculateRecoveryRate(metrics: ErrorMetrics): number {
-    const totalRetries = Object.values(metrics.retryAttempts).reduce((sum, count) => sum + count, 0);
-    const successfulRetries = Object.values(metrics.successfulRetries).reduce((sum, count) => sum + count, 0);
+    const totalRetries = Object.values(metrics.retryAttempts).reduce(
+      (sum, count) => sum + count,
+      0
+    );
+    const successfulRetries = Object.values(metrics.successfulRetries).reduce(
+      (sum, count) => sum + count,
+      0
+    );
 
     if (totalRetries === 0) return 100; // No retries needed = 100% success
     return Math.round((successfulRetries / totalRetries) * 100);
   }
 
   // Update system health based on error patterns
-  function updateSystemHealth(state: EnhancedErrorStoreState): 'healthy' | 'degraded' | 'unhealthy' {
+  function updateSystemHealth(
+    state: EnhancedErrorStoreState
+  ): 'healthy' | 'degraded' | 'unhealthy' {
     const { metrics, errors } = state;
     const recentCriticalErrors = errors.filter(
-      error => error.severity === ErrorSeverity.CRITICAL &&
-               (Date.now() - error.timestamp) < 300000 // 5 minutes
+      (error) => error.severity === ErrorSeverity.CRITICAL && Date.now() - error.timestamp < 300000 // 5 minutes
     ).length;
 
     const errorRate = metrics.errorRate;
@@ -184,23 +191,23 @@ function createEnhancedErrorStore() {
   function updateMetrics(state: EnhancedErrorStoreState): ErrorMetrics {
     const { errors } = state;
     const now = Date.now();
-    const recentErrors = errors.filter(error => (now - error.timestamp) < 3600000); // 1 hour
+    const recentErrors = errors.filter((error) => now - error.timestamp < 3600000); // 1 hour
 
     // Count errors by category
     const errorsByCategory = {} as Record<ErrorCategory, number>;
-    Object.values(ErrorCategory).forEach(category => {
-      errorsByCategory[category] = errors.filter(error => error.category === category).length;
+    Object.values(ErrorCategory).forEach((category) => {
+      errorsByCategory[category] = errors.filter((error) => error.category === category).length;
     });
 
     // Count errors by severity
     const errorsBySeverity = {} as Record<ErrorSeverity, number>;
-    Object.values(ErrorSeverity).forEach(severity => {
-      errorsBySeverity[severity] = errors.filter(error => error.severity === severity).length;
+    Object.values(ErrorSeverity).forEach((severity) => {
+      errorsBySeverity[severity] = errors.filter((error) => error.severity === severity).length;
     });
 
     // Top error commands
     const topErrorCommands = {} as Record<string, number>;
-    errors.forEach(error => {
+    errors.forEach((error) => {
       if (error.context?.command) {
         const command = error.context.command as string;
         topErrorCommands[command] = (topErrorCommands[command] || 0) + 1;
@@ -216,7 +223,7 @@ function createEnhancedErrorStore() {
       recoveryRate: calculateRecoveryRate(state.metrics),
       topErrorCommands,
       retryAttempts: state.metrics.retryAttempts,
-      successfulRetries: state.metrics.successfulRetries
+      successfulRetries: state.metrics.successfulRetries,
     };
   }
 
@@ -227,14 +234,16 @@ function createEnhancedErrorStore() {
      * Add a new error with enhanced analytics
      */
     addError: (errorOptions: AppErrorOptions | AppError) => {
-      const error = errorOptions instanceof AppError
-        ? errorOptions
-        : new AppError(errorOptions);
+      const error = errorOptions instanceof AppError ? errorOptions : new AppError(errorOptions);
 
-      update(state => {
+      update((state) => {
         const newErrors = [error, ...state.errors];
         const newMetrics = updateMetrics({ ...state, errors: newErrors });
-        const newSystemHealth = updateSystemHealth({ ...state, errors: newErrors, metrics: newMetrics });
+        const newSystemHealth = updateSystemHealth({
+          ...state,
+          errors: newErrors,
+          metrics: newMetrics,
+        });
 
         // Log error with enhanced context
         console.error(`[${error.category}:${error.severity}] ${error.message}`, {
@@ -242,7 +251,7 @@ function createEnhancedErrorStore() {
           context: error.context,
           originalError: error.originalError,
           systemHealth: newSystemHealth,
-          errorRate: newMetrics.errorRate
+          errorRate: newMetrics.errorRate,
         });
 
         return {
@@ -250,7 +259,7 @@ function createEnhancedErrorStore() {
           errors: newErrors,
           lastError: error,
           metrics: newMetrics,
-          systemHealth: newSystemHealth
+          systemHealth: newSystemHealth,
         };
       });
 
@@ -260,16 +269,16 @@ function createEnhancedErrorStore() {
     /**
      * Track a retry attempt
      */
-    trackRetry: (command: string, attempt: number, error?: AppError) => {
-      update(state => ({
+    trackRetry: (command: string, _attempt: number, _error?: AppError) => {
+      update((state) => ({
         ...state,
         metrics: {
           ...state.metrics,
           retryAttempts: {
             ...state.metrics.retryAttempts,
-            [command]: (state.metrics.retryAttempts[command] || 0) + 1
-          }
-        }
+            [command]: (state.metrics.retryAttempts[command] || 0) + 1,
+          },
+        },
       }));
     },
 
@@ -277,13 +286,13 @@ function createEnhancedErrorStore() {
      * Track a successful operation (including successful retries)
      */
     trackSuccess: (command: string, wasRetry: boolean = false) => {
-      update(state => {
+      update((state) => {
         const newMetrics = { ...state.metrics };
 
         if (wasRetry) {
           newMetrics.successfulRetries = {
             ...newMetrics.successfulRetries,
-            [command]: (newMetrics.successfulRetries[command] || 0) + 1
+            [command]: (newMetrics.successfulRetries[command] || 0) + 1,
           };
         }
 
@@ -291,8 +300,8 @@ function createEnhancedErrorStore() {
           ...state,
           metrics: {
             ...newMetrics,
-            recoveryRate: calculateRecoveryRate(newMetrics)
-          }
+            recoveryRate: calculateRecoveryRate(newMetrics),
+          },
         };
       });
     },
@@ -301,8 +310,8 @@ function createEnhancedErrorStore() {
      * Remove a specific error by ID
      */
     dismissError: (errorId: string) => {
-      update(state => {
-        const updatedErrors = state.errors.filter(error => error.id !== errorId);
+      update((state) => {
+        const updatedErrors = state.errors.filter((error) => error.id !== errorId);
         const newMetrics = updateMetrics({ ...state, errors: updatedErrors });
 
         return {
@@ -310,7 +319,11 @@ function createEnhancedErrorStore() {
           errors: updatedErrors,
           lastError: updatedErrors[0] || null,
           metrics: newMetrics,
-          systemHealth: updateSystemHealth({ ...state, errors: updatedErrors, metrics: newMetrics })
+          systemHealth: updateSystemHealth({
+            ...state,
+            errors: updatedErrors,
+            metrics: newMetrics,
+          }),
         };
       });
     },
@@ -319,8 +332,8 @@ function createEnhancedErrorStore() {
      * Mark an error as handled
      */
     markErrorAsHandled: (errorId: string) => {
-      update(state => {
-        const error = state.errors.find(e => e.id === errorId);
+      update((state) => {
+        const error = state.errors.find((e) => e.id === errorId);
         if (error) {
           error.markAsHandled();
         }
@@ -332,11 +345,11 @@ function createEnhancedErrorStore() {
      * Clear all errors
      */
     clearAllErrors: () => {
-      update(state => ({
+      update((state) => ({
         ...state,
         errors: [],
         lastError: null,
-        systemHealth: 'healthy'
+        systemHealth: 'healthy',
       }));
     },
 
@@ -344,8 +357,8 @@ function createEnhancedErrorStore() {
      * Clear errors by category
      */
     clearErrorsByCategory: (category: ErrorCategory) => {
-      update(state => {
-        const filteredErrors = state.errors.filter(error => error.category !== category);
+      update((state) => {
+        const filteredErrors = state.errors.filter((error) => error.category !== category);
         const newMetrics = updateMetrics({ ...state, errors: filteredErrors });
 
         return {
@@ -353,7 +366,11 @@ function createEnhancedErrorStore() {
           errors: filteredErrors,
           lastError: filteredErrors[0] || null,
           metrics: newMetrics,
-          systemHealth: updateSystemHealth({ ...state, errors: filteredErrors, metrics: newMetrics })
+          systemHealth: updateSystemHealth({
+            ...state,
+            errors: filteredErrors,
+            metrics: newMetrics,
+          }),
         };
       });
     },
@@ -363,8 +380,8 @@ function createEnhancedErrorStore() {
      */
     getErrorsBySeverity: (severity: ErrorSeverity): AppError[] => {
       let errors: AppError[] = [];
-      update(state => {
-        errors = state.errors.filter(error => error.severity === severity);
+      update((state) => {
+        errors = state.errors.filter((error) => error.severity === severity);
         return state;
       });
       return errors;
@@ -375,7 +392,7 @@ function createEnhancedErrorStore() {
      */
     getAnalytics: (): ErrorMetrics => {
       let metrics: ErrorMetrics = initialState.metrics;
-      update(state => {
+      update((state) => {
         metrics = state.metrics;
         return state;
       });
@@ -386,12 +403,12 @@ function createEnhancedErrorStore() {
      * Update recovery strategy for a category
      */
     updateRecoveryStrategy: (category: ErrorCategory, strategy: Partial<RecoveryStrategy>) => {
-      update(state => ({
+      update((state) => ({
         ...state,
         recoveryStrategies: {
           ...state.recoveryStrategies,
-          [category]: { ...state.recoveryStrategies[category], ...strategy }
-        }
+          [category]: { ...state.recoveryStrategies[category], ...strategy },
+        },
       }));
     },
 
@@ -400,7 +417,7 @@ function createEnhancedErrorStore() {
      */
     getSystemHealth: (): 'healthy' | 'degraded' | 'unhealthy' => {
       let health: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-      update(state => {
+      update((state) => {
         health = state.systemHealth;
         return state;
       });
@@ -410,29 +427,34 @@ function createEnhancedErrorStore() {
     /**
      * Initialize the enhanced error store
      */
-    init: (maxErrors = 200, maxAgeMs = 7200000) => { // 2 hours default
+    init: (maxErrors = 200, maxAgeMs = 7200000) => {
+      // 2 hours default
       setupOnlineTracking();
 
       // Enhanced cleanup with analytics preservation
       cleanupInterval = setInterval(() => {
-        update(state => {
+        update((state) => {
           const now = Date.now();
           const cleanedErrors = state.errors
-            .filter(error => {
+            .filter((error) => {
               // Keep unhandled errors and recent errors
-              return !error.handled || (now - error.timestamp < maxAgeMs);
+              return !error.handled || now - error.timestamp < maxAgeMs;
             })
             .slice(0, maxErrors); // Limit total number of errors
 
           const newMetrics = updateMetrics({ ...state, errors: cleanedErrors });
-          const newSystemHealth = updateSystemHealth({ ...state, errors: cleanedErrors, metrics: newMetrics });
+          const newSystemHealth = updateSystemHealth({
+            ...state,
+            errors: cleanedErrors,
+            metrics: newMetrics,
+          });
 
           return {
             ...state,
             errors: cleanedErrors,
             lastError: cleanedErrors[0] || null,
             metrics: newMetrics,
-            systemHealth: newSystemHealth
+            systemHealth: newSystemHealth,
           };
         });
       }, 60000); // Check every minute
@@ -459,14 +481,14 @@ function createEnhancedErrorStore() {
      */
     exportErrorData: () => {
       let exportData: any = {};
-      update(state => {
+      update((state) => {
         exportData = {
           timestamp: new Date().toISOString(),
           systemHealth: state.systemHealth,
           isOnline: state.isOnline,
           metrics: state.metrics,
-          recentErrors: state.errors.slice(0, 50).map(error => error.toJSON()),
-          recoveryStrategies: state.recoveryStrategies
+          recentErrors: state.errors.slice(0, 50).map((error) => error.toJSON()),
+          recoveryStrategies: state.recoveryStrategies,
         };
         return state;
       });
@@ -491,7 +513,7 @@ function createEnhancedErrorStore() {
       }
 
       set(initialState);
-    }
+    },
   };
 }
 
@@ -509,7 +531,7 @@ export function addTimeoutError(command: string, timeoutMs: number): AppError {
     details: `The command ${command} took longer than ${timeoutMs}ms to complete. This might indicate network issues or server overload.`,
     category: ErrorCategory.TIMEOUT,
     severity: ErrorSeverity.WARNING,
-    context: { command, timeoutMs, timestamp: Date.now() }
+    context: { command, timeoutMs, timestamp: Date.now() },
   });
 }
 
@@ -522,8 +544,8 @@ export function addNetworkError(message: string, originalError?: unknown): AppEr
     originalError,
     context: {
       isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-      timestamp: Date.now()
-    }
+      timestamp: Date.now(),
+    },
   });
 }
 
@@ -533,7 +555,7 @@ export function addValidationError(message: string, context?: Record<string, unk
     details: message,
     category: ErrorCategory.VALIDATION,
     severity: ErrorSeverity.WARNING,
-    context: { ...context, timestamp: Date.now() }
+    context: { ...context, timestamp: Date.now() },
   });
 }
 
@@ -544,7 +566,7 @@ export function addApiError(command: string, originalError: unknown): AppError {
     category: ErrorCategory.API,
     severity: ErrorSeverity.ERROR,
     originalError,
-    context: { command, timestamp: Date.now() }
+    context: { command, timestamp: Date.now() },
   });
 }
 
@@ -576,6 +598,6 @@ export function detectErrorPatterns(): {
     cascadingFailures,
     highErrorRate,
     repeatedErrors,
-    systemDegraded
+    systemDegraded,
   };
 }

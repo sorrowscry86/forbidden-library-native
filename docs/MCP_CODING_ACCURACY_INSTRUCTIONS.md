@@ -15,30 +15,34 @@ When using the filesystem-with-morph MCP tools for code editing, follow these in
 ### 📋 Required Workflow for Code Changes
 
 #### Step 1: Context Gathering
+
 ```json
 // Always read the file first
 {
   "path": "/absolute/path/to/file.js",
-  "head": 100  // Adjust based on file size
+  "head": 100 // Adjust based on file size
 }
 ```
 
 #### Step 2: Plan the Edit
+
 - Identify the exact lines to modify
 - Note surrounding context (3-5 lines before/after)
 - Determine if multiple small edits are better than one large edit
 
 #### Step 3: Execute with Precision
+
 ```json
 {
   "path": "/absolute/path/to/file.js",
   "code_edit": "// ... existing code ...\n// NEW CODE HERE\n// ... existing code ...",
   "instruction": "Add new function with specific purpose",
-  "dryRun": true  // Use for complex changes
+  "dryRun": true // Use for complex changes
 }
 ```
 
 #### Step 4: Verify the Result
+
 ```json
 // Read the modified section to confirm
 {
@@ -50,18 +54,21 @@ When using the filesystem-with-morph MCP tools for code editing, follow these in
 ### 🔧 Best Practices for Different File Types
 
 #### JavaScript/TypeScript Files
+
 - Preserve existing import statements
 - Maintain function signatures exactly
 - Keep existing comments and documentation
 - Respect indentation and formatting
 
 #### Configuration Files (JSON, YAML, etc.)
+
 - Validate syntax before editing
 - Preserve existing structure
 - Use `dryRun` to preview changes
 - Test configuration after changes
 
 #### Documentation Files (Markdown, etc.)
+
 - Maintain heading hierarchy
 - Preserve existing links and references
 - Keep consistent formatting
@@ -78,6 +85,7 @@ When using the filesystem-with-morph MCP tools for code editing, follow these in
 ### 🎯 High-Accuracy Edit Patterns
 
 #### Pattern 1: Function Addition
+
 ```json
 // 1. Read to find insertion point
 {"path": "/file.js", "head": 100}
@@ -91,6 +99,7 @@ When using the filesystem-with-morph MCP tools for code editing, follow these in
 ```
 
 #### Pattern 2: Configuration Update
+
 ```json
 // 1. Read current config
 {"path": "/config.json"}
@@ -105,6 +114,7 @@ When using the filesystem-with-morph MCP tools for code editing, follow these in
 ```
 
 #### Pattern 3: Import Statement Addition
+
 ```json
 // 1. Read to see existing imports
 {"path": "/file.js", "head": 20}
@@ -120,6 +130,7 @@ When using the filesystem-with-morph MCP tools for code editing, follow these in
 ### 🔍 Verification Checklist
 
 After each edit, verify:
+
 - [ ] File was modified correctly
 - [ ] Syntax is valid
 - [ ] No unintended changes occurred
@@ -129,12 +140,14 @@ After each edit, verify:
 ### 🚀 Advanced Techniques
 
 #### For Large Refactoring
+
 1. **Break into phases** - Make multiple small edits
 2. **Use dryRun extensively** - Preview each phase
 3. **Read between phases** - Verify intermediate state
 4. **Test incrementally** - Validate each change
 
 #### For Complex File Structures
+
 1. **Read entire file first** - Understand full context
 2. **Map dependencies** - Note imports and references
 3. **Plan edit sequence** - Order changes logically
@@ -143,6 +156,7 @@ After each edit, verify:
 ### 📝 Error Recovery
 
 If an edit fails:
+
 1. **Read the file** - Check current state
 2. **Identify the issue** - Syntax, path, or context problem
 3. **Fix incrementally** - Make smaller, targeted changes
@@ -151,6 +165,7 @@ If an edit fails:
 ### 🎯 Success Metrics
 
 A successful edit should:
+
 - ✅ Maintain file integrity
 - ✅ Preserve existing functionality
 - ✅ Follow project conventions

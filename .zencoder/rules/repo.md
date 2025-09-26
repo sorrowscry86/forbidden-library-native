@@ -6,9 +6,11 @@ alwaysApply: true
 # Forbidden Library Information
 
 ## Summary
+
 Privacy-first, high-performance desktop application for interacting with powerful language models. Built with Rust/Tauri for the backend and SvelteKit for the frontend, providing unparalleled performance, security, and deep OS integration. Currently at version 2.0.0.
 
 ## Structure
+
 - **src/**: SvelteKit frontend source with components, routes, and utilities
 - **src-tauri/**: Rust backend with database, services, and Tauri integration
 - **static/**: Static assets for the application
@@ -19,6 +21,7 @@ Privacy-first, high-performance desktop application for interacting with powerfu
 - **build/**: Production build output directory
 
 ## Language & Runtime
+
 **Languages**: Rust, TypeScript, JavaScript
 **Rust Version**: 1.70+
 **Node.js Version**: 18+
@@ -28,7 +31,9 @@ Privacy-first, high-performance desktop application for interacting with powerfu
 ## Dependencies
 
 ### Frontend Dependencies
+
 **Main Dependencies**:
+
 - SvelteKit 2.0.0+ with adapter-static
 - Tauri API 1.5.1+ for native integration
 - Marked 11.1.1 (Markdown rendering)
@@ -38,12 +43,15 @@ Privacy-first, high-performance desktop application for interacting with powerfu
 - Tailwind CSS 3.3.0+ with typography and forms plugins
 
 **Development Dependencies**:
+
 - TypeScript 5.0.0+ with ESLint integration
 - Prettier 3.1.1+ with Svelte plugin
 - Vitest 1.2.0+ for frontend testing
 
 ### Backend Dependencies
+
 **Main Dependencies**:
+
 - Tauri 1.5+ with extensive feature set (file system, dialogs, clipboard)
 - Tokio 1.35+ with full async runtime features
 - Rusqlite 0.30+ with bundled SQLite and chrono support
@@ -53,6 +61,7 @@ Privacy-first, high-performance desktop application for interacting with powerfu
 - Tracing ecosystem for structured logging
 
 **Development Dependencies**:
+
 - Mockall 0.12+ for test mocking
 - Criterion 0.5+ for performance benchmarking
 - Proptest 1.3+ for property-based testing
@@ -78,15 +87,18 @@ pnpm version:bump
 ```
 
 ## Testing
+
 **Frontend Framework**: Vitest
-**Test Location**: src/**/*.{test,spec}.{js,ts}
+**Test Location**: src/**/\*.{test,spec}.{js,ts}
 **Configuration**: vitest.config.js
-**Backend Testing**: 
+**Backend Testing\*\*:
+
 - Unit tests in each module
 - Integration tests in src-tauri/tests/
 - Security audit tests in src-tauri/tests/security_audit.rs
 - Performance benchmarks in src-tauri/benches/
-**Run Command**:
+  **Run Command**:
+
 ```bash
 # Frontend tests
 pnpm test
@@ -101,12 +113,15 @@ cargo bench
 ```
 
 ## CI/CD Pipeline
+
 **Workflows**:
+
 - CI/CD Pipeline (.github/workflows/ci.yml)
 - Comprehensive Testing (.github/workflows/test.yml)
 - Release Automation (.github/workflows/release.yml)
 
 **Quality Checks**:
+
 - Rust formatting (cargo fmt)
 - Rust linting (cargo clippy)
 - TypeScript checking (svelte-check)
@@ -114,6 +129,7 @@ cargo bench
 - Security audits (cargo audit, npm audit)
 
 **Testing Matrix**:
+
 - Multiple OS: Windows, macOS, Linux
 - Multiple Rust versions: stable, 1.70
 - Performance benchmarks with criterion
@@ -122,6 +138,7 @@ cargo bench
 ## Project Components
 
 ### Frontend (SvelteKit)
+
 - **Configuration**: svelte.config.js, vite.config.js, tailwind.config.js
 - **Routing**: File-based routing in src/routes/
 - **Components**: Organized in src/lib/components/
@@ -129,6 +146,7 @@ cargo bench
 - **Type Definitions**: TypeScript types in src/lib/types/
 
 ### Backend (Rust/Tauri)
+
 - **Entry Point**: src-tauri/src/main.rs and src-tauri/src/lib.rs
 - **Modules**:
   - commands.rs: Tauri IPC commands
@@ -139,6 +157,7 @@ cargo bench
 - **Build Configuration**: src-tauri/build.rs
 
 ### Security Features
+
 - CSP policies defined in tauri.conf.json
 - Explicit filesystem permission scoping
 - SQLCipher encryption for database
@@ -147,6 +166,7 @@ cargo bench
 - No telemetry or data collection
 
 ### Application Features
+
 - Conversational interface with rich text rendering
 - File system integration with secure access controls
 - MCP (Model Context Protocol) integration

@@ -7,15 +7,16 @@ This file contains recommendations for cleaning up the repository before the ini
 1. **Remove Sensitive Information**
    - [ ] Remove the `.env` file from version control
    - [ ] Create a `.env.example` file with placeholder values instead
+
    ```
    # Sentry Configuration - VoidCat RDC
    # Production monitoring for Forbidden Library
-   
+
    SENTRY_DSN=your_sentry_dsn_here
    ENVIRONMENT=development
    SENTRY_TRACES_SAMPLE_RATE=1.0
    SENTRY_PROFILES_SAMPLE_RATE=1.0
-   
+
    # Development flags
    RUST_LOG=info
    RUST_BACKTRACE=1
@@ -49,6 +50,7 @@ This file contains recommendations for cleaning up the repository before the ini
 ## Implementation Instructions
 
 ### For .env file:
+
 ```powershell
 # Create .env.example with placeholder values
 Copy-Item -Path "d:\Clones\GitHub\TechData\ForbiddenLibraryRework\.env" -Destination "d:\Clones\GitHub\TechData\ForbiddenLibraryRework\.env.example"
@@ -57,12 +59,14 @@ Copy-Item -Path "d:\Clones\GitHub\TechData\ForbiddenLibraryRework\.env" -Destina
 ```
 
 ### For build artifacts:
+
 ```powershell
 # These directories should already be in .gitignore
 # Just make sure they're not included in the initial commit
 ```
 
 ### For missing documentation:
+
 ```powershell
 # Create CONTRIBUTING.md and CHANGELOG.md files
 New-Item -Path "d:\Clones\GitHub\TechData\ForbiddenLibraryRework\CONTRIBUTING.md" -ItemType File
@@ -70,11 +74,13 @@ New-Item -Path "d:\Clones\GitHub\TechData\ForbiddenLibraryRework\CHANGELOG.md" -
 ```
 
 ### For .gitignore fix:
+
 ```powershell
 # Edit .gitignore to fix Windows-style paths
 ```
 
 ### For moving documentation files:
+
 ```powershell
 # Move documentation files to docs folder
 Move-Item -Path "d:\Clones\GitHub\TechData\ForbiddenLibraryRework\Forbidden Library Blueprint v2.0 (Expanded).md" -Destination "d:\Clones\GitHub\TechData\ForbiddenLibraryRework\docs\"

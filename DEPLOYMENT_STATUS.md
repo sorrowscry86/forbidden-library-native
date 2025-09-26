@@ -10,6 +10,7 @@
 ## 📊 **Deployment Information**
 
 ### Container Details
+
 - **Container Name**: `forbidden-library`
 - **Image**: `forbiddenlibraryrework-forbidden-library:latest`
 - **Container ID**: `6bce2a8ec041`
@@ -17,11 +18,13 @@
 - **Port Mapping**: `0.0.0.0:8080->80/tcp`
 
 ### Network Configuration
+
 - **Network**: `forbiddenlibraryrework_forbidden-library-network`
 - **Type**: Bridge network
 - **Access**: External access enabled
 
 ### Health Status
+
 - **Health Check**: ✅ PASSING
 - **Endpoint**: `http://localhost:8080/health`
 - **Response**: `healthy`
@@ -32,11 +35,13 @@
 ## 🌐 **Access Information**
 
 ### Production URLs
+
 - **Main Application**: http://localhost:8080
 - **Health Check**: http://localhost:8080/health
 - **Network Access**: Available on all interfaces
 
 ### Application Features
+
 - ✅ SvelteKit frontend served
 - ✅ Nginx reverse proxy active
 - ✅ Gzip compression enabled
@@ -48,6 +53,7 @@
 ## 🔧 **Management Commands**
 
 ### View Status
+
 ```bash
 # Check container status
 docker ps
@@ -60,6 +66,7 @@ curl http://localhost:8080/health
 ```
 
 ### Container Management
+
 ```bash
 # Stop the application
 docker-compose down
@@ -75,6 +82,7 @@ docker-compose logs -f
 ```
 
 ### Scaling (if needed)
+
 ```bash
 # Scale to multiple instances
 docker-compose up -d --scale forbidden-library=3
@@ -88,12 +96,14 @@ docker stats forbidden-library
 ## 📈 **Performance Metrics**
 
 ### Resource Usage
+
 - **Memory**: Optimized Alpine Linux base
 - **CPU**: Efficient multi-stage build
 - **Disk**: Minimal footprint with static assets
 - **Network**: Gzip compression for faster loading
 
 ### Security Features
+
 - ✅ Non-root container execution
 - ✅ Security headers implemented
 - ✅ Hidden file access prevention
@@ -105,6 +115,7 @@ docker stats forbidden-library
 ## 🔍 **Monitoring & Troubleshooting**
 
 ### Health Monitoring
+
 ```bash
 # Check container health
 docker inspect forbidden-library | grep -A 10 "Health"
@@ -119,6 +130,7 @@ docker exec forbidden-library tail -f /var/log/nginx/access.log
 ### Common Issues & Solutions
 
 #### Port Already in Use
+
 ```bash
 # Check what's using port 8080
 netstat -tulpn | grep :8080
@@ -130,6 +142,7 @@ docker-compose up -d
 ```
 
 #### Container Won't Start
+
 ```bash
 # Check logs
 docker logs forbidden-library
@@ -140,6 +153,7 @@ docker-compose up -d --build
 ```
 
 #### Application Not Responding
+
 ```bash
 # Check if container is running
 docker ps
@@ -156,12 +170,14 @@ docker exec forbidden-library nginx -t
 ## 🎯 **Next Steps**
 
 ### Immediate Actions
+
 1. ✅ **Deployment Complete** - Application is live
 2. 🔄 **Monitor Performance** - Watch resource usage
 3. 📊 **Test Functionality** - Verify all features work
 4. 🔒 **Security Review** - Confirm security measures
 
 ### Future Enhancements
+
 1. **SSL/TLS Setup** - Configure HTTPS
 2. **Load Balancer** - Add reverse proxy
 3. **Monitoring** - Set up Prometheus/Grafana
@@ -173,6 +189,7 @@ docker exec forbidden-library nginx -t
 ## 📞 **Support Information**
 
 ### Quick Commands Reference
+
 ```bash
 # Start application
 docker-compose up -d
@@ -191,6 +208,7 @@ docker-compose restart
 ```
 
 ### Emergency Procedures
+
 ```bash
 # Emergency stop
 docker-compose down

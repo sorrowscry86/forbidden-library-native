@@ -13,6 +13,7 @@
 ## Test Results
 
 ### 1. Health Check Test
+
 - **Status**: [PASS/FAIL]
 - **Endpoint**: http://localhost:8080/health
 - **Expected**: 200 OK, "healthy"
@@ -20,6 +21,7 @@
 - **Notes**: [NOTES]
 
 ### 2. Main Application Load Test
+
 - **Status**: [PASS/FAIL]
 - **Endpoint**: http://localhost:8080/
 - **Expected**: 200 OK, HTML content
@@ -29,6 +31,7 @@
 - **Notes**: [NOTES]
 
 ### 3. Navigation and UI Elements Test
+
 - **Status**: [PASS/FAIL]
 - **Elements Found**:
   - Main Content: [YES/NO]
@@ -39,6 +42,7 @@
 - **Notes**: [NOTES]
 
 ### 4. Responsive Design Test
+
 - **Status**: [PASS/FAIL]
 - **Viewports Tested**:
   - Desktop (1920x1080): [PASS/FAIL]
@@ -47,6 +51,7 @@
 - **Notes**: [NOTES]
 
 ### 5. Performance Test
+
 - **Status**: [PASS/FAIL]
 - **Load Time**: [TIME]ms
 - **DOM Content Loaded**: [TIME]ms
@@ -59,35 +64,41 @@
 ## Screenshots
 
 ### Desktop View
+
 ![Desktop Screenshot](screenshots/desktop.png)
 
 ### Tablet View
+
 ![Tablet Screenshot](screenshots/tablet.png)
 
 ### Mobile View
+
 ![Mobile Screenshot](screenshots/mobile.png)
 
 ---
 
 ## Performance Metrics
 
-| Metric | Value | Threshold | Status |
-|--------|-------|-----------|--------|
-| Load Time | [TIME]ms | < 3000ms | [PASS/FAIL] |
-| DOM Content Loaded | [TIME]ms | < 1000ms | [PASS/FAIL] |
-| Total Load Time | [TIME]ms | < 5000ms | [PASS/FAIL] |
+| Metric             | Value    | Threshold | Status      |
+| ------------------ | -------- | --------- | ----------- |
+| Load Time          | [TIME]ms | < 3000ms  | [PASS/FAIL] |
+| DOM Content Loaded | [TIME]ms | < 1000ms  | [PASS/FAIL] |
+| Total Load Time    | [TIME]ms | < 5000ms  | [PASS/FAIL] |
 
 ---
 
 ## Issues Found
 
 ### Critical Issues
+
 - [NONE/LIST ISSUES]
 
 ### Warning Issues
+
 - [NONE/LIST ISSUES]
 
 ### Information Issues
+
 - [NONE/LIST ISSUES]
 
 ---
@@ -95,9 +106,11 @@
 ## Recommendations
 
 ### Immediate Actions
+
 - [RECOMMENDATIONS]
 
 ### Future Improvements
+
 - [RECOMMENDATIONS]
 
 ---
@@ -105,12 +118,14 @@
 ## Test Environment Details
 
 ### System Information
+
 - **OS**: [OPERATING_SYSTEM]
 - **Node.js Version**: [VERSION]
 - **Playwright Version**: [VERSION]
 - **Browser**: Chromium [VERSION]
 
 ### Application Information
+
 - **Container ID**: [CONTAINER_ID]
 - **Image**: [IMAGE_NAME]
 - **Port**: 8080

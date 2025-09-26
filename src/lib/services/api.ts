@@ -1,7 +1,8 @@
 import { invoke } from '@tauri-apps/api';
-import { safeInvoke, createMockConversations, createMockConversation, isTauriAvailable } from '$lib/utils/tauri-detection';
+import { createMockConversations, createMockConversation } from '$lib/utils/enhanced-tauri-detection';
 import { AppError, ErrorCategory, ErrorSeverity } from '$lib/types/errors';
-import { addError, addTimeoutError, addApiError, addValidationError } from '$lib/stores/error-store';
+import { environment } from '$lib/stores/environment';
+import { get } from 'svelte/store';
 
 /**
  * Enhanced invoke function with comprehensive error handling and categorization
@@ -11,30 +12,29 @@ export async function invokeWithTimeout<T>(
   args?: Record<string, unknown>,
   timeoutMs: number = 8000
 ): Promise<T> {
-  // If Tauri is not available, use safe invoke with fallbacks
-  if (!isTauriAvailable()) {
-    return safeInvoke<T>(command, args, () => {
-      // Provide fallbacks for common commands
-      switch (command) {
-        case 'get_conversations':
-          return createMockConversations() as T;
-        case 'create_conversation':
-          return createMockConversation() as T;
-        case 'get_messages':
-          return [] as T;
-        case 'send_message':
-          return { success: true, message: 'Demo message sent (web mode)' } as T;
-        default:
-          console.error(`No fallback available for command: ${command}`);
-          throw new AppError({
-            message: 'Feature not available',
-            details: `The command ${command} is not available in web mode`,
-            category: ErrorCategory.ENVIRONMENT,
-            severity: ErrorSeverity.WARNING,
-            context: { command, environment: 'web' }
-          });
-      }
-    });
+  const currentEnvironment = get(environment);
+
+  // If not in Tauri, use fallbacks
+  if (currentEnvironment !== 'tauri') {
+    switch (command) {
+      case 'get_conversations':
+        return createMockConversations() as T;
+      case 'create_conversation':
+        return createMockConversation() as T;
+      case 'get_messages':
+        return [] as T;
+      case 'send_message':
+        return { success: true, message: 'Demo message sent (web mode)' } as T;
+      default:
+        console.error(`No fallback available for command: ${command}`);
+        throw new AppError({
+          message: 'Feature not available',
+          details: `The command ${command} is not available in web mode`,
+          category: ErrorCategory.ENVIRONMENT,
+          severity: ErrorSeverity.WARNING,
+          context: { command, environment: 'web' },
+        });
+    }
   }
 
   let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
@@ -46,10 +46,7 @@ export async function invokeWithTimeout<T>(
   });
 
   try {
-    const result = await Promise.race([
-      invoke<T>(command, args as any),
-      timeoutPromise,
-    ]) as T;
+    const result = (await Promise.race([invoke<T>(command, args), timeoutPromise])) as T;
     return result;
   } catch (error) {
     // Enhanced error categorization
@@ -60,7 +57,7 @@ export async function invokeWithTimeout<T>(
         category: ErrorCategory.TIMEOUT,
         severity: ErrorSeverity.WARNING,
         originalError: error,
-        context: { command, timeoutMs }
+        context: { command, timeoutMs },
       });
     } else if (error instanceof Error && error.message?.includes('not available')) {
       throw new AppError({
@@ -69,16 +66,19 @@ export async function invokeWithTimeout<T>(
         category: ErrorCategory.ENVIRONMENT,
         severity: ErrorSeverity.ERROR,
         originalError: error,
-        context: { command }
+        context: { command },
       });
-    } else if (error instanceof Error && (error.message?.includes('permission') || error.message?.includes('denied'))) {
+    } else if (
+      error instanceof Error &&
+      (error.message?.includes('permission') || error.message?.includes('denied'))
+    ) {
       throw new AppError({
         message: 'Permission denied',
         details: `Access denied for command ${command}`,
         category: ErrorCategory.PERMISSION,
         severity: ErrorSeverity.ERROR,
         originalError: error,
-        context: { command }
+        context: { command },
       });
     } else {
       throw new AppError({
@@ -87,7 +87,7 @@ export async function invokeWithTimeout<T>(
         category: ErrorCategory.API,
         severity: ErrorSeverity.ERROR,
         originalError: error,
-        context: { command, args }
+        context: { command, args },
       });
     }
   } finally {
@@ -95,7 +95,9 @@ export async function invokeWithTimeout<T>(
   }
 }
 
-export function ms(seconds: number): number { return Math.round(seconds * 1000); }
+export function ms(seconds: number): number {
+  return Math.round(seconds * 1000);
+}
 
 /**
  * Validation wrapper for API calls with input validation
@@ -109,16 +111,15 @@ export async function invokeWithValidation<T>(
   // Validate arguments before sending
   const validationResult = validator(args);
   if (validationResult !== true) {
-    const errorMessage = typeof validationResult === 'string'
-      ? validationResult
-      : 'Invalid arguments provided';
+    const errorMessage =
+      typeof validationResult === 'string' ? validationResult : 'Invalid arguments provided';
 
     throw new AppError({
       message: 'Validation failed',
       details: errorMessage,
       category: ErrorCategory.VALIDATION,
       severity: ErrorSeverity.WARNING,
-      context: { command, args }
+      context: { command, args },
     });
   }
 
@@ -145,10 +146,12 @@ export async function invokeWithRetry<T>(
       lastError = error instanceof AppError ? error : new Error(String(error));
 
       // Don't retry on validation errors or environment errors
-      if (error instanceof AppError &&
-          (error.category === ErrorCategory.VALIDATION ||
-           error.category === ErrorCategory.ENVIRONMENT ||
-           error.category === ErrorCategory.PERMISSION)) {
+      if (
+        error instanceof AppError &&
+        (error.category === ErrorCategory.VALIDATION ||
+          error.category === ErrorCategory.ENVIRONMENT ||
+          error.category === ErrorCategory.PERMISSION)
+      ) {
         throw error;
       }
 
@@ -159,10 +162,12 @@ export async function invokeWithRetry<T>(
 
       // Calculate delay with exponential backoff
       const delay = baseDelayMs * Math.pow(2, attempt);
-      console.warn(`Command ${command} failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`);
+      console.warn(
+        `Command ${command} failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`
+      );
 
       // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
@@ -236,4 +241,3 @@ export function validateSendMessage(args: unknown): boolean | string {
 
   return true;
 }
-

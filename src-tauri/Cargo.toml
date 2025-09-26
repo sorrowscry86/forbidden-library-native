@@ -9,7 +9,7 @@ rust-version = "1.70"
 description = "Privacy-first desktop application for interacting with powerful language models - Rust backend"
 
 [lib]
-name = "forbidden_library_native"
+name = "forbidden_library_native_lib"
 crate-type = ["cdylib", "rlib"]
 
 [build-dependencies]

@@ -3,6 +3,7 @@
 ## 🎯 Core Rules for AI Assistants
 
 ### Always Follow This Workflow:
+
 1. **READ FIRST** - Always read the target file before editing
 2. **USE ABSOLUTE PATHS** - Never use relative or tilde paths
 3. **MAKE SMALL EDITS** - Prefer multiple small changes over one large edit
@@ -27,6 +28,7 @@
 ```
 
 ### ⚠️ Critical Don'ts:
+
 - ❌ Don't assume file structure - READ FIRST
 - ❌ Don't use relative paths - ALWAYS ABSOLUTE
 - ❌ Don't make large changes - BREAK INTO SMALL EDITS
@@ -36,21 +38,25 @@
 ### 🔧 File-Specific Guidelines:
 
 **JavaScript/TypeScript:**
+
 - Preserve imports and function signatures
 - Maintain existing comments and formatting
 - Respect indentation
 
 **Configuration Files:**
+
 - Use `dryRun` for JSON/YAML changes
 - Validate syntax before applying
 - Preserve existing structure
 
 **Documentation:**
+
 - Maintain heading hierarchy
 - Preserve links and references
 - Keep consistent formatting
 
 ### 🎯 Success Checklist:
+
 - [ ] File modified correctly
 - [ ] Syntax is valid
 - [ ] No unintended changes

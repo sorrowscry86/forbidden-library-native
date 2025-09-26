@@ -12,6 +12,7 @@ This document provides instructions for building and running the Forbidden Libra
 ### Using Docker Compose (Recommended)
 
 1. **Build and run the application:**
+
    ```bash
    docker-compose up -d
    ```
@@ -30,11 +31,13 @@ This document provides instructions for building and running the Forbidden Libra
 #### Production Build
 
 1. **Build the production image:**
+
    ```bash
    docker build -t forbidden-library:latest .
    ```
 
 2. **Run the production container:**
+
    ```bash
    docker run -p 8080:80 forbidden-library:latest
    ```
@@ -45,11 +48,13 @@ This document provides instructions for building and running the Forbidden Libra
 #### Development Build
 
 1. **Build the development image:**
+
    ```bash
    docker build -f Dockerfile.dev -t forbidden-library:dev .
    ```
 
 2. **Run the development container:**
+
    ```bash
    docker run -p 1430:1430 -v $(pwd):/app forbidden-library:dev
    ```
@@ -60,12 +65,14 @@ This document provides instructions for building and running the Forbidden Libra
 ## Using Build Scripts
 
 ### Linux/macOS
+
 ```bash
 chmod +x scripts/docker-build.sh
 ./scripts/docker-build.sh
 ```
 
 ### Windows
+
 ```cmd
 scripts\docker-build.bat
 ```
@@ -73,11 +80,13 @@ scripts\docker-build.bat
 ## Docker Compose Profiles
 
 ### Production Profile (Default)
+
 ```bash
 docker-compose up -d
 ```
 
 ### Development Profile
+
 ```bash
 docker-compose --profile dev up -d
 ```
@@ -98,6 +107,7 @@ The following environment variables can be configured:
 ## Health Checks
 
 The application includes health checks that monitor:
+
 - Application availability
 - Nginx service status
 
@@ -106,25 +116,28 @@ The application includes health checks that monitor:
 ### Common Issues
 
 1. **Port already in use:**
+
    ```bash
    # Check what's using the port
    netstat -tulpn | grep :8080
-   
+
    # Use a different port
    docker run -p 8081:80 forbidden-library:latest
    ```
 
 2. **Permission denied:**
+
    ```bash
    # On Linux/macOS, ensure proper permissions
    sudo chown -R $USER:$USER .
    ```
 
 3. **Build fails:**
+
    ```bash
    # Clean Docker cache
    docker system prune -a
-   
+
    # Rebuild without cache
    docker build --no-cache -t forbidden-library:latest .
    ```
@@ -132,6 +145,7 @@ The application includes health checks that monitor:
 ### Logs
 
 View application logs:
+
 ```bash
 # Docker Compose
 docker-compose logs -f
@@ -143,6 +157,7 @@ docker logs <container_id>
 ### Shell Access
 
 Access the container shell:
+
 ```bash
 # Docker Compose
 docker-compose exec forbidden-library sh
@@ -178,8 +193,8 @@ services:
   nginx-proxy:
     image: nginx:alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./nginx-proxy.conf:/etc/nginx/nginx.conf
       - ./ssl:/etc/nginx/ssl

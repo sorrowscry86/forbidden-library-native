@@ -3,6 +3,7 @@
 This file contains draft Linear issues to create for Phase 6 (cross-platform testing & release prep) and follow-ups from Phase 5 completion. Use the Linear API tools to push these as issues.
 
 ## Issue: Cross-Platform Full QA
+
 - Title: Cross-Platform QA: Windows/macOS/Linux
 - Team: QA / Pandora
 - Priority: High
@@ -17,6 +18,7 @@ This file contains draft Linear issues to create for Phase 6 (cross-platform tes
   - Record environment specs and results as attachments.
 
 ## Issue: User Acceptance Testing (Flow of Thought)
+
 - Title: UAT: Flow-of-Thought Workflows
 - Team: Product / Contractor
 - Priority: High
@@ -29,6 +31,7 @@ This file contains draft Linear issues to create for Phase 6 (cross-platform tes
   - Aggregate feedback and create bug/feature issues with reproducible steps.
 
 ## Issue: Release Candidate Packaging
+
 - Title: Prepare Signed Release Candidates (RC)
 - Team: Release Engineering / Albedo
 - Priority: Medium
@@ -41,6 +44,7 @@ This file contains draft Linear issues to create for Phase 6 (cross-platform tes
   - Document signing procedures and required secrets.
 
 ## Issue: Frontend Sentry Integration (Finish)
+
 - Title: Frontend Sentry: Browser/Webview Instrumentation
 - Team: Frontend / Albedo
 - Priority: Medium
@@ -55,6 +59,7 @@ This file contains draft Linear issues to create for Phase 6 (cross-platform tes
 ---
 
 Notes:
+
 - These drafts are ready to be created via the Linear API (`mcp_linear_create_issue`). Adjust assignees/team names to match your Linear workspace. Attach relevant documents from `docs/` as needed.
 
 ## Created Issues (Linear)

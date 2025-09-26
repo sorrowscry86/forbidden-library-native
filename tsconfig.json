@@ -12,17 +12,8 @@
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
-  "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true
   },
-  "include": [
-    "src/**/*.d.ts",
-    "src/**/*.ts",
-    "src/**/*.js",
-    "src/**/*.svelte"
-  ],
-  "exclude": [
-    "node_modules/**",
-    "./build/**",
-    "./src-tauri/**"
-  ]
+  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
+  "exclude": ["node_modules/**", "./build/**", "./src-tauri/**"]
 }
