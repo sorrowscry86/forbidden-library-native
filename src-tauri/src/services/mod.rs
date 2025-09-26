@@ -1,5 +1,6 @@
 use crate::models::{Conversation, Message, Persona};
 use crate::database::DatabaseManager;
+use crate::errors::{AppError, AppResult};
 use rusqlite::{Result as SqliteResult};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -15,25 +16,21 @@ impl ConversationService {
     }
 
     /// Create new conversation
-    pub fn create_conversation(&self, title: String, persona_id: Option<i64>) -> SqliteResult<Conversation> {
+    pub fn create_conversation(&self, title: String, persona_id: Option<i64>) -> AppResult<Conversation> {
+        if title.trim().is_empty() {
+            return Err(AppError::validation("Conversation title cannot be empty"));
+        }
+
         let conversation = Conversation::new(title, persona_id);
         let uuid_str = conversation.uuid.to_string();
 
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.connection().lock()
+            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        
         let mut stmt = conn.prepare(
             "INSERT INTO conversations (uuid, title, persona_id, created_at, updated_at, archived)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
         )?;
-
-        let persona_id_sql: Box<dyn rusqlite::ToSql> = match conversation.persona_id {
-            Some(id) => Box::new(id),
-            None => Box::new(rusqlite::types::Null),
-        };
-
-        let persona_id_sql: Box<dyn rusqlite::ToSql> = match conversation.persona_id {
-            Some(id) => Box::new(id),
-            None => Box::new(rusqlite::types::Null),
-        };
 
         stmt.execute(rusqlite::params![
             &uuid_str,
@@ -51,11 +48,20 @@ impl ConversationService {
     }
 
     /// Get all conversations with pagination
-    pub fn get_conversations(&self, limit: Option<i32>, offset: Option<i32>) -> SqliteResult<Vec<Conversation>> {
+    pub fn get_conversations(&self, limit: Option<i32>, offset: Option<i32>) -> AppResult<Vec<Conversation>> {
         let limit = limit.unwrap_or(50);
         let offset = offset.unwrap_or(0);
 
-        let conn = self.db.connection().lock().unwrap();
+        if limit <= 0 || limit > 100 {
+            return Err(AppError::validation("Limit must be between 1 and 100"));
+        }
+        if offset < 0 {
+            return Err(AppError::validation("Offset must be non-negative"));
+        }
+
+        let conn = self.db.connection().lock()
+            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        
         let mut stmt = conn.prepare(
             "SELECT id, uuid, title, persona_id, created_at, updated_at, archived
              FROM conversations
@@ -64,15 +70,27 @@ impl ConversationService {
         )?;
 
         let rows = stmt.query_map([limit, offset], |row| {
+            let uuid_str: String = row.get(1)?;
+            let uuid = Uuid::parse_str(&uuid_str)
+                .map_err(|_| rusqlite::Error::InvalidColumnType(1, "uuid".to_string(), rusqlite::types::Type::Text))?;
+            
+            let created_at_str: String = row.get(4)?;
+            let created_at = DateTime::parse_from_rfc3339(&created_at_str)
+                .map_err(|_| rusqlite::Error::InvalidColumnType(4, "created_at".to_string(), rusqlite::types::Type::Text))?
+                .with_timezone(&Utc);
+            
+            let updated_at_str: String = row.get(5)?;
+            let updated_at = DateTime::parse_from_rfc3339(&updated_at_str)
+                .map_err(|_| rusqlite::Error::InvalidColumnType(5, "updated_at".to_string(), rusqlite::types::Type::Text))?
+                .with_timezone(&Utc);
+
             Ok(Conversation {
                 id: Some(row.get::<_, i64>(0)?),
-                uuid: Uuid::parse_str(&row.get::<_, String>(1)?).unwrap_or_default(),
+                uuid,
                 title: row.get(2)?,
                 persona_id: row.get::<_, Option<i64>>(3)?,
-                created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                    .unwrap_or_default().with_timezone(&Utc),
-                updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                created_at,
+                updated_at,
                 archived: row.get::<_, String>(6)? == "true",
                 metadata: None, // Load separately if needed
             })
@@ -86,8 +104,14 @@ impl ConversationService {
     }
 
     /// Get conversation by ID
-    pub fn get_conversation(&self, id: i64) -> SqliteResult<Option<Conversation>> {
-        let conn = self.db.connection().lock().unwrap();
+    pub fn get_conversation(&self, id: i64) -> AppResult<Option<Conversation>> {
+        if id <= 0 {
+            return Err(AppError::validation("Conversation ID must be positive"));
+        }
+
+        let conn = self.db.connection().lock()
+            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        
         let mut stmt = conn.prepare(
             "SELECT id, uuid, title, persona_id, created_at, updated_at, archived
              FROM conversations
@@ -95,15 +119,27 @@ impl ConversationService {
         )?;
 
         let mut rows = stmt.query_map([id], |row| {
+            let uuid_str: String = row.get(1)?;
+            let uuid = Uuid::parse_str(&uuid_str)
+                .map_err(|_| rusqlite::Error::InvalidColumnType(1, "uuid".to_string(), rusqlite::types::Type::Text))?;
+            
+            let created_at_str: String = row.get(4)?;
+            let created_at = DateTime::parse_from_rfc3339(&created_at_str)
+                .map_err(|_| rusqlite::Error::InvalidColumnType(4, "created_at".to_string(), rusqlite::types::Type::Text))?
+                .with_timezone(&Utc);
+            
+            let updated_at_str: String = row.get(5)?;
+            let updated_at = DateTime::parse_from_rfc3339(&updated_at_str)
+                .map_err(|_| rusqlite::Error::InvalidColumnType(5, "updated_at".to_string(), rusqlite::types::Type::Text))?
+                .with_timezone(&Utc);
+
             Ok(Conversation {
                 id: Some(row.get::<_, i64>(0)?),
-                uuid: Uuid::parse_str(&row.get::<_, String>(1)?).unwrap_or_default(),
+                uuid,
                 title: row.get(2)?,
                 persona_id: row.get::<_, Option<i64>>(3)?,
-                created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                    .unwrap_or_default().with_timezone(&Utc),
-                updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                created_at,
+                updated_at,
                 archived: row.get::<_, String>(6)? == "true",
                 metadata: None,
             })
@@ -117,10 +153,19 @@ impl ConversationService {
 
     /// Add message to conversation
     pub fn add_message(&self, conversation_id: i64, role: crate::models::MessageRole,
-                      content: String, tokens_used: Option<i32>, model_used: Option<String>) -> SqliteResult<Message> {
+                      content: String, tokens_used: Option<i32>, model_used: Option<String>) -> AppResult<Message> {
+        if conversation_id <= 0 {
+            return Err(AppError::validation("Conversation ID must be positive"));
+        }
+        if content.trim().is_empty() {
+            return Err(AppError::validation("Message content cannot be empty"));
+        }
+
         let message = Message::new(conversation_id, role, content);
 
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.connection().lock()
+            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        
         let mut stmt = conn.prepare(
             "INSERT INTO messages (conversation_id, role, content, created_at, tokens_used, model_used)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
@@ -157,8 +202,14 @@ impl ConversationService {
     }
 
     /// Get messages for a conversation
-    pub fn get_messages(&self, conversation_id: i64) -> SqliteResult<Vec<Message>> {
-        let conn = self.db.connection().lock().unwrap();
+    pub fn get_messages(&self, conversation_id: i64) -> AppResult<Vec<Message>> {
+        if conversation_id <= 0 {
+            return Err(AppError::validation("Conversation ID must be positive"));
+        }
+
+        let conn = self.db.connection().lock()
+            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        
         let mut stmt = conn.prepare(
             "SELECT id, conversation_id, role, content, created_at, tokens_used, model_used
              FROM messages
@@ -175,13 +226,17 @@ impl ConversationService {
                 _ => crate::models::MessageRole::User, // Default fallback
             };
 
+            let created_at_str: String = row.get(4)?;
+            let created_at = DateTime::parse_from_rfc3339(&created_at_str)
+                .map_err(|_| rusqlite::Error::InvalidColumnType(4, "created_at".to_string(), rusqlite::types::Type::Text))?
+                .with_timezone(&Utc);
+
             Ok(Message {
                 id: Some(row.get::<_, i64>(0)?),
                 conversation_id: row.get(1)?,
                 role,
                 content: row.get(3)?,
-                created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                created_at,
                 tokens_used: row.get::<_, Option<String>>(5)?.and_then(|s| s.parse().ok()),
                 model_used: row.get::<_, Option<String>>(6)?.filter(|s| !s.is_empty()),
                 metadata: None,
@@ -196,20 +251,41 @@ impl ConversationService {
     }
 
     /// Delete conversation and all its messages
-    pub fn delete_conversation(&self, id: i64) -> SqliteResult<()> {
-        // Messages will be deleted automatically due to CASCADE
-        let conn = self.db.connection().lock().unwrap();
-        conn.execute("DELETE FROM conversations WHERE id = ?1", [id])?;
+    pub fn delete_conversation(&self, id: i64) -> AppResult<()> {
+        if id <= 0 {
+            return Err(AppError::validation("Conversation ID must be positive"));
+        }
+
+        let conn = self.db.connection().lock()
+            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        
+        let rows_affected = conn.execute("DELETE FROM conversations WHERE id = ?1", [id])?;
+        
+        if rows_affected == 0 {
+            return Err(AppError::not_found("Conversation not found"));
+        }
+        
         Ok(())
     }
 
     /// Archive/unarchive conversation
-    pub fn set_conversation_archived(&self, id: i64, archived: bool) -> SqliteResult<()> {
-        let conn = self.db.connection().lock().unwrap();
-        conn.execute(
+    pub fn set_conversation_archived(&self, id: i64, archived: bool) -> AppResult<()> {
+        if id <= 0 {
+            return Err(AppError::validation("Conversation ID must be positive"));
+        }
+
+        let conn = self.db.connection().lock()
+            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        
+        let rows_affected = conn.execute(
             "UPDATE conversations SET archived = ?1, updated_at = ?2 WHERE id = ?3",
             [&archived.to_string(), &Utc::now().to_rfc3339(), &id.to_string()]
         )?;
+
+        if rows_affected == 0 {
+            return Err(AppError::not_found("Conversation not found"));
+        }
+
         Ok(())
     }
 }

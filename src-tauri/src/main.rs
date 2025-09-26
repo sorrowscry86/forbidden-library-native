@@ -22,6 +22,7 @@ use tracing::{info, error};
 
 mod commands;
 mod database;
+mod errors;
 mod models;
 mod services;
 mod monitoring;
