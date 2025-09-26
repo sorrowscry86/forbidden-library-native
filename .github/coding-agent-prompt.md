@@ -15,6 +15,19 @@
 
 **DO NOT PROCEED** to the next phase until current phase meets ALL completion criteria.
 
+### KNOWN ISSUES TO ADDRESS IN CLOUD
+
+The following TypeScript errors exist and should be prioritized for fixing:
+
+- **Settings page**: Fixed locally, should merge cleanly
+- **Enhanced API service**: Multiple validation function errors in `src/lib/services/enhanced-api.ts`
+- **ChatInterface component**: Type errors with conversation.messages property access
+- **ProjectPlanning component**: Missing Project/ProjectMilestone type exports
+- **Error notification components**: Timeout type compatibility issues
+- **Route pages**: Various type safety and export issues
+
+These issues do not block the build process but should be resolved for type safety.
+
 ---
 
 ## PHASE 1: FOUNDATION - ERROR HANDLING & DATABASE ARCHITECTURE
