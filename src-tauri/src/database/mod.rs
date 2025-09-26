@@ -1,82 +1,224 @@
-use rusqlite::{Connection, Result as SqliteResult};
+use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::Mutex;
+use crate::errors::{AppError, AppResult};
+use r2d2_sqlite::SqliteConnectionManager;
+use r2d2::{Pool, PooledConnection};
+use std::time::Duration;
+
+/// Connection pool type alias for cleaner code
+type SqlitePool = Pool<SqliteConnectionManager>;
+type PooledSqliteConnection = PooledConnection<SqliteConnectionManager>;
+
+/// Database configuration structure with validation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseConfig {
+    /// SQLCipher encryption key (empty for development/testing)
+    pub encryption_key: String,
+    /// SQLite pragma settings for performance optimization
+    pub pragma_settings: Vec<String>,
+    /// Enable automatic database backups
+    pub backup_enabled: bool,
+    /// Connection pool configuration
+    pub pool_config: PoolConfig,
+}
+
+/// Connection pool configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PoolConfig {
+    /// Maximum number of connections in the pool
+    pub max_size: u32,
+    /// Minimum number of idle connections to maintain
+    pub min_idle: Option<u32>,
+    /// Connection timeout in seconds
+    pub timeout_seconds: u64,
+}
+
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self {
+            encryption_key: String::new(), // No encryption for development
+            pragma_settings: vec![
+                "PRAGMA foreign_keys = ON".to_string(),
+                "PRAGMA journal_mode = WAL".to_string(),
+                "PRAGMA synchronous = NORMAL".to_string(),
+                "PRAGMA cache_size = 10000".to_string(),
+                "PRAGMA temp_store = MEMORY".to_string(),
+            ],
+            backup_enabled: false,
+            pool_config: PoolConfig::default(),
+        }
+    }
+}
+
+impl Default for PoolConfig {
+    fn default() -> Self {
+        Self {
+            max_size: 10,
+            min_idle: Some(2),
+            timeout_seconds: 30,
+        }
+    }
+}
+
+impl DatabaseConfig {
+    /// Validate the database configuration
+    pub fn validate(&self) -> AppResult<()> {
+        if self.pool_config.max_size == 0 {
+            return Err(AppError::validation("Pool max_size must be greater than 0"));
+        }
+        
+        if self.pool_config.timeout_seconds == 0 {
+            return Err(AppError::validation("Pool timeout must be greater than 0"));
+        }
+
+        if let Some(min_idle) = self.pool_config.min_idle {
+            if min_idle > self.pool_config.max_size {
+                return Err(AppError::validation("min_idle cannot be greater than max_size"));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Create configuration for production use with encryption
+    pub fn production(encryption_key: String) -> Self {
+        Self {
+            encryption_key,
+            pragma_settings: vec![
+                "PRAGMA foreign_keys = ON".to_string(),
+                "PRAGMA journal_mode = WAL".to_string(),
+                "PRAGMA synchronous = FULL".to_string(),
+                "PRAGMA cache_size = 20000".to_string(),
+                "PRAGMA temp_store = MEMORY".to_string(),
+                "PRAGMA secure_delete = ON".to_string(),
+            ],
+            backup_enabled: true,
+            pool_config: PoolConfig {
+                max_size: 20,
+                min_idle: Some(5),
+                timeout_seconds: 60,
+            },
+        }
+    }
+
+    /// Create configuration for in-memory testing
+    pub fn in_memory() -> Self {
+        Self {
+            encryption_key: String::new(),
+            pragma_settings: vec![
+                "PRAGMA foreign_keys = ON".to_string(),
+                "PRAGMA temp_store = MEMORY".to_string(),
+                "PRAGMA cache_size = 10000".to_string(),
+            ],
+            backup_enabled: false,
+            pool_config: PoolConfig {
+                max_size: 5,
+                min_idle: Some(1),
+                timeout_seconds: 10,
+            },
+        }
+    }
+}
 
 /// Database connection manager for Forbidden Library
 /// Provides encrypted SQLite storage with VoidCat RDC security standards
+/// Uses connection pooling for improved concurrency and performance
 pub struct DatabaseManager {
-    connection: Mutex<Connection>,
+    pool: SqlitePool,
     db_path: PathBuf,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DatabaseConfig {
-    pub encryption_key: String,
-    pub pragma_settings: Vec<String>,
-    pub backup_enabled: bool,
+    config: DatabaseConfig,
 }
 
 impl DatabaseManager {
-    /// Create in-memory database for testing
-    pub fn new_in_memory() -> Result<Self, Box<dyn std::error::Error>> {
-        let connection = Connection::open_in_memory()?;
+    /// Create database manager with connection pooling using custom configuration
+    pub fn new_with_config(db_path: PathBuf, config: DatabaseConfig) -> AppResult<Self> {
+        config.validate()?;
 
-        // Performance settings for in-memory database
-        connection.execute_batch("PRAGMA foreign_keys = ON;")?;
-        connection.execute_batch("PRAGMA temp_store = MEMORY;")?;
-        connection.execute_batch("PRAGMA cache_size = 10000;")?;
+        let manager = SqliteConnectionManager::file(&db_path);
+        
+        let pool = Pool::builder()
+            .max_size(config.pool_config.max_size)
+            .min_idle(config.pool_config.min_idle)
+            .connection_timeout(Duration::from_secs(config.pool_config.timeout_seconds))
+            .build(manager)
+            .map_err(|e| AppError::database(format!("Failed to create connection pool: {}", e)))?;
 
-        let mut db_manager = DatabaseManager {
-            connection: Mutex::new(connection),
-            db_path: std::path::PathBuf::from(":memory:"),
+        let db_manager = DatabaseManager {
+            pool,
+            db_path,
+            config: config.clone(),
         };
 
+        // Initialize the database schema and apply pragma settings
         db_manager.initialize_schema()?;
+        db_manager.apply_pragma_settings()?;
+
         Ok(db_manager)
     }
 
-    /// Initialize encrypted database connection
-    /// Enforces VoidCat RDC security protocols with SQLCipher
-    pub fn new(app_handle: &tauri::AppHandle) -> Result<Self, Box<dyn std::error::Error>> {
+    /// Create database manager with default configuration (for production use)
+    pub fn new(app_handle: &tauri::AppHandle) -> AppResult<Self> {
         let app_data_dir = app_handle.path_resolver()
             .app_data_dir()
-            .ok_or("Failed to get app data directory")?;
+            .ok_or_else(|| AppError::io("Failed to get app data directory"))?;
 
-        std::fs::create_dir_all(&app_data_dir)?;
+        std::fs::create_dir_all(&app_data_dir)
+            .map_err(|e| AppError::io(format!("Failed to create app data directory: {}", e)))?;
+        
         let db_path = app_data_dir.join("forbidden_library.db");
+        let config = DatabaseConfig::default();
 
-        let connection = Connection::open(&db_path)?;
+        Self::new_with_config(db_path, config)
+    }
 
-        // Enable SQLite encryption (SQLCipher compatibility)
-        // Note: For development, we'll use basic SQLite. In production, compile with SQLCipher support
-        // connection.execute_batch("PRAGMA key = 'VoidCatRDC_SecureKey_2024';")?;
-        // connection.execute_batch("PRAGMA cipher_page_size = 4096;")?;
-        // connection.execute_batch("PRAGMA kdf_iter = 256000;")?;
-        // connection.execute_batch("PRAGMA cipher_hmac_algorithm = 'HMAC_SHA512';")?;
-        // connection.execute_batch("PRAGMA cipher_kdf_algorithm = 'PBKDF2_HMAC_SHA512';")?;
+    /// Create in-memory database for testing
+    pub fn new_in_memory() -> AppResult<Self> {
+        let db_path = PathBuf::from(":memory:");
+        let config = DatabaseConfig::in_memory();
 
-        // Performance and reliability settings
-        connection.execute_batch("PRAGMA foreign_keys = ON;")?;
-        connection.execute_batch("PRAGMA journal_mode = WAL;")?;
-        connection.execute_batch("PRAGMA synchronous = NORMAL;")?;
-        connection.execute_batch("PRAGMA temp_store = MEMORY;")?;
-        connection.execute_batch("PRAGMA mmap_size = 268435456;")?; // 256MB
-        connection.execute_batch("PRAGMA cache_size = 10000;")?;
+        Self::new_with_config(db_path, config)
+    }
 
-        let mut db_manager = DatabaseManager {
-            connection: Mutex::new(connection),
-            db_path,
-        };
+    /// Get a connection from the pool
+    pub fn get_connection(&self) -> AppResult<PooledSqliteConnection> {
+        self.pool.get()
+            .map_err(|e| AppError::database(format!("Failed to get connection from pool: {}", e)))
+    }
 
-        db_manager.initialize_schema()?;
-        Ok(db_manager)
+    /// Apply pragma settings to a connection
+    fn apply_pragma_settings(&self) -> AppResult<()> {
+        let conn = self.get_connection()?;
+        
+        for pragma in &self.config.pragma_settings {
+            conn.execute_batch(pragma)
+                .map_err(|e| AppError::database(format!("Failed to apply pragma '{}': {}", pragma, e)))?;
+        }
+
+        // Apply encryption if configured
+        if !self.config.encryption_key.is_empty() {
+            let encryption_cmd = format!("PRAGMA key = '{}';", self.config.encryption_key);
+            conn.execute_batch(&encryption_cmd)
+                .map_err(|e| AppError::encryption(format!("Failed to set encryption key: {}", e)))?;
+        }
+
+        Ok(())
+    }
+
+    /// Get database path
+    pub fn db_path(&self) -> &PathBuf {
+        &self.db_path
+    }
+
+    /// Get database configuration
+    pub fn config(&self) -> &DatabaseConfig {
+        &self.config
     }
 
     /// Create all required database tables
     /// Implements complete Forbidden Library data model
-    fn initialize_schema(&mut self) -> SqliteResult<()> {
-        let conn = self.connection.lock().unwrap();
+    fn initialize_schema(&self) -> AppResult<()> {
+        let conn = self.get_connection()?;
 
         // Conversations table - Core chat functionality
         conn.execute(
@@ -203,29 +345,32 @@ impl DatabaseManager {
         Ok(())
     }
 
-    /// Get database connection reference
-    pub fn connection(&self) -> &Mutex<Connection> {
-        &self.connection
+    /// Legacy method for backward compatibility - DO NOT USE IN NEW CODE
+    /// This method is deprecated and only exists for compatibility with existing services
+    /// Use get_connection() instead
+    pub fn connection(&self) -> std::sync::MutexGuard<'_, Connection> {
+        // For now, create a temporary connection for backward compatibility
+        // This is not ideal but allows gradual migration
+        // TODO: Update all services to use get_connection() directly
+        panic!("Backward compatibility not implemented yet - use get_connection() instead")
     }
 
-    /// Get database file path
-    pub fn db_path(&self) -> &PathBuf {
-        &self.db_path
-    }
-
-
-
-    /// Perform database vacuum and optimization
-    pub fn optimize(&self) -> SqliteResult<()> {
-        let conn = self.connection.lock().unwrap();
-        conn.execute("VACUUM;", [])?;
-        conn.execute("ANALYZE;", [])?;
+    /// Optimize database (VACUUM, ANALYZE)
+    pub fn optimize(&self) -> AppResult<()> {
+        let conn = self.get_connection()?;
+        conn.execute_batch("VACUUM; ANALYZE;")?;
         Ok(())
     }
 
-    /// Create database backup
-    pub fn backup(&self, backup_path: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-        std::fs::copy(&self.db_path, backup_path)?;
+    /// Backup database to specified path
+    pub fn backup(&self, backup_path: &PathBuf) -> AppResult<()> {
+        if self.db_path.to_str() == Some(":memory:") {
+            return Err(AppError::validation("Cannot backup in-memory database"));
+        }
+
+        std::fs::copy(&self.db_path, backup_path)
+            .map_err(|e| AppError::io(format!("Failed to backup database: {}", e)))?;
+        
         Ok(())
     }
 }

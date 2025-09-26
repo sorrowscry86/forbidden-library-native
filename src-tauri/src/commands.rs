@@ -8,11 +8,22 @@ use tauri::State;
 use serde::{Deserialize, Serialize};
 use crate::models::{Conversation, Message, Persona, MessageRole};
 use crate::services::Services;
+use crate::errors::AppError;
 use std::sync::Arc;
 
 /// Application state shared across all commands
 pub struct AppState {
     pub services: Arc<Services>,
+}
+
+/// Convert AppError to user-friendly error message for Tauri frontend
+fn handle_error(error: AppError) -> String {
+    if error.is_critical() {
+        tracing::error!("{}", error.technical_message());
+    } else {
+        tracing::warn!("{}", error.technical_message());
+    }
+    error.user_message()
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -61,7 +72,7 @@ pub async fn create_conversation(
     tracing::info!("Creating conversation: {} with persona_id: {:?}", title, persona_id);
     state.services.conversations
         .create_conversation(title, persona_id)
-        .map_err(|e| format!("Failed to create conversation: {}", e))
+        .map_err(handle_error)
 }
 
 #[tauri::command]
@@ -73,7 +84,7 @@ pub async fn get_conversations(
     tracing::debug!("Getting conversations with limit: {:?}, offset: {:?}", limit, offset);
     state.services.conversations
         .get_conversations(limit, offset)
-        .map_err(|e| format!("Failed to get conversations: {}", e))
+        .map_err(handle_error)
 }
 
 #[tauri::command]
@@ -84,7 +95,7 @@ pub async fn get_conversation(
     tracing::debug!("Getting conversation with id: {}", id);
     state.services.conversations
         .get_conversation(id)
-        .map_err(|e| format!("Failed to get conversation: {}", e))
+        .map_err(handle_error)
 }
 
 #[tauri::command]
@@ -95,7 +106,7 @@ pub async fn delete_conversation(
     tracing::info!("Deleting conversation with id: {}", id);
     state.services.conversations
         .delete_conversation(id)
-        .map_err(|e| format!("Failed to delete conversation: {}", e))
+        .map_err(handle_error)
 }
 
 #[tauri::command]
@@ -107,7 +118,7 @@ pub async fn archive_conversation(
     tracing::info!("Setting conversation {} archived status to: {}", id, archived);
     state.services.conversations
         .set_conversation_archived(id, archived)
-        .map_err(|e| format!("Failed to archive conversation: {}", e))
+        .map_err(handle_error)
 }
 
 // ==================== MESSAGE COMMANDS ====================
@@ -127,12 +138,12 @@ pub async fn add_message(
         "user" => MessageRole::User,
         "assistant" => MessageRole::Assistant,
         "system" => MessageRole::System,
-        _ => return Err(format!("Invalid role: {}", role)),
+        _ => return Err(AppError::validation(format!("Invalid role: {}", role)).user_message()),
     };
 
     state.services.conversations
         .add_message(conversation_id, message_role, content, tokens_used, model_used)
-        .map_err(|e| format!("Failed to add message: {}", e))
+        .map_err(handle_error)
 }
 
 #[tauri::command]
@@ -143,7 +154,7 @@ pub async fn get_messages(
     tracing::debug!("Getting messages for conversation: {}", conversation_id);
     state.services.conversations
         .get_messages(conversation_id)
-        .map_err(|e| format!("Failed to get messages: {}", e))
+        .map_err(handle_error)
 }
 
 // ==================== PERSONA COMMANDS ====================
