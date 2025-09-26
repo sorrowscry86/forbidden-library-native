@@ -7,9 +7,9 @@
   let loading = true;
   let apiKey = '';
   let selectedProvider = 'openai';
+  let environmentInfo: any = {}; // To store environment information
   const providers = [
     { id: 'openai', name: 'OpenAI' },
-  let environmentInfo: any = {}; // To store environment information
     { id: 'anthropic', name: 'Anthropic' },
     { id: 'google', name: 'Google AI' },
     { id: 'local', name: 'Local Model' },
@@ -24,7 +24,7 @@
       loading = true;
 
       if ($environment === 'tauri') {
-        const config = await invokeWithTimeout(
+        const config: any = await invokeWithTimeout(
           'get_api_config',
           { provider: selectedProvider },
           ms(8)
