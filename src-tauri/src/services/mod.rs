@@ -24,8 +24,8 @@ impl ConversationService {
         let conversation = Conversation::new(title, persona_id);
         let uuid_str = conversation.uuid.to_string();
 
-        let conn = self.db.connection().lock()
-            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        let conn = self.db.get_connection()
+            .map_err(|_| AppError::database("Failed to acquire database connection"))?;
         
         let mut stmt = conn.prepare(
             "INSERT INTO conversations (uuid, title, persona_id, created_at, updated_at, archived)
@@ -59,8 +59,8 @@ impl ConversationService {
             return Err(AppError::validation("Offset must be non-negative"));
         }
 
-        let conn = self.db.connection().lock()
-            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        let conn = self.db.get_connection()
+            .map_err(|_| AppError::database("Failed to acquire database connection"))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, uuid, title, persona_id, created_at, updated_at, archived
@@ -109,8 +109,8 @@ impl ConversationService {
             return Err(AppError::validation("Conversation ID must be positive"));
         }
 
-        let conn = self.db.connection().lock()
-            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        let conn = self.db.get_connection()
+            .map_err(|_| AppError::database("Failed to acquire database connection"))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, uuid, title, persona_id, created_at, updated_at, archived
@@ -163,8 +163,8 @@ impl ConversationService {
 
         let message = Message::new(conversation_id, role, content);
 
-        let conn = self.db.connection().lock()
-            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        let conn = self.db.get_connection()
+            .map_err(|_| AppError::database("Failed to acquire database connection"))?;
         
         let mut stmt = conn.prepare(
             "INSERT INTO messages (conversation_id, role, content, created_at, tokens_used, model_used)
@@ -207,8 +207,8 @@ impl ConversationService {
             return Err(AppError::validation("Conversation ID must be positive"));
         }
 
-        let conn = self.db.connection().lock()
-            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        let conn = self.db.get_connection()
+            .map_err(|_| AppError::database("Failed to acquire database connection"))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, conversation_id, role, content, created_at, tokens_used, model_used
@@ -256,8 +256,8 @@ impl ConversationService {
             return Err(AppError::validation("Conversation ID must be positive"));
         }
 
-        let conn = self.db.connection().lock()
-            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        let conn = self.db.get_connection()
+            .map_err(|_| AppError::database("Failed to acquire database connection"))?;
         
         let rows_affected = conn.execute("DELETE FROM conversations WHERE id = ?1", [id])?;
         
@@ -274,8 +274,8 @@ impl ConversationService {
             return Err(AppError::validation("Conversation ID must be positive"));
         }
 
-        let conn = self.db.connection().lock()
-            .map_err(|_| AppError::database("Failed to acquire database lock"))?;
+        let conn = self.db.get_connection()
+            .map_err(|_| AppError::database("Failed to acquire database connection"))?;
         
         let rows_affected = conn.execute(
             "UPDATE conversations SET archived = ?1, updated_at = ?2 WHERE id = ?3",
@@ -305,7 +305,7 @@ impl PersonaService {
                          system_prompt: String) -> SqliteResult<Persona> {
         let persona = Persona::new(name, description, system_prompt);
 
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.get_connection().unwrap();
         let mut stmt = conn.prepare(
             "INSERT INTO personas (name, description, system_prompt, created_at, updated_at, active)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
@@ -329,7 +329,7 @@ impl PersonaService {
 
     /// Get all active personas
     pub fn get_personas(&self) -> SqliteResult<Vec<Persona>> {
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.get_connection().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, name, description, system_prompt, created_at, updated_at, active
              FROM personas
@@ -366,7 +366,7 @@ impl PersonaService {
 
     /// Get persona by ID
     pub fn get_persona(&self, id: i64) -> SqliteResult<Option<Persona>> {
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.get_connection().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, name, description, system_prompt, created_at, updated_at, active
              FROM personas
@@ -432,14 +432,14 @@ impl PersonaService {
         );
 
         let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.get_connection().unwrap();
         conn.execute(&query, param_refs.as_slice())?;
         Ok(())
     }
 
     /// Delete persona
     pub fn delete_persona(&self, id: i64) -> SqliteResult<()> {
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.get_connection().unwrap();
         conn.execute("DELETE FROM personas WHERE id = ?1", [id])?;
         Ok(())
     }
@@ -461,7 +461,7 @@ impl ApiService {
         // TODO: Implement proper encryption for API keys
         let encrypted_key = api_key; // Placeholder - implement actual encryption
 
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.get_connection().unwrap();
         conn.execute(
             "INSERT OR REPLACE INTO api_configs
              (id, provider, api_key, base_url, created_at, updated_at, active)
@@ -481,7 +481,7 @@ impl ApiService {
 
     /// Retrieve API configuration (decrypt sensitive data)
     pub fn get_api_config(&self, provider: &str) -> SqliteResult<Option<(String, Option<String>)>> {
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.get_connection().unwrap();
         let mut stmt = conn.prepare(
             "SELECT api_key, base_url FROM api_configs WHERE provider = ?1 AND active = 'true'"
         )?;
@@ -507,7 +507,7 @@ impl ApiService {
 
     /// Delete API configuration
     pub fn delete_api_config(&self, provider: &str) -> SqliteResult<()> {
-        let conn = self.db.connection().lock().unwrap();
+        let conn = self.db.get_connection().unwrap();
         conn.execute(
             "UPDATE api_configs SET active = 'false', updated_at = ?1 WHERE provider = ?2",
             [&Utc::now().to_rfc3339(), provider]
