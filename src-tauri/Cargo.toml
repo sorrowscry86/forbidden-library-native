@@ -52,6 +52,9 @@ reqwest = { workspace = true }
 walkdir = { workspace = true }
 ring = { workspace = true }
 
+# Regular expressions for validation
+regex = { workspace = true }
+
 
 
 [dev-dependencies]
