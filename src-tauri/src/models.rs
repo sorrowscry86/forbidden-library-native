@@ -3,9 +3,9 @@
 //! This module defines all the data structures used throughout the Forbidden Library application.
 //! Comprehensive models for conversations, personas, grimoire entries, and system configuration.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 /// Core conversation model - Enhanced for native application
 #[derive(Debug, Serialize, Deserialize, Clone)]

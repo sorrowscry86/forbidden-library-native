@@ -18,18 +18,18 @@
 
 use std::sync::Arc;
 use tauri::Manager;
-use tracing::{info, error};
+use tracing::{error, info};
 
 mod commands;
 mod database;
 mod models;
-mod services;
 mod monitoring;
+mod services;
 
 use commands::AppState;
 use database::DatabaseManager;
+use monitoring::{PerformanceConfig, PerformanceMonitor};
 use services::Services;
-use monitoring::{PerformanceMonitor, PerformanceConfig};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -46,9 +46,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Track startup performance
     let startup_start_time = PerformanceMonitor::start_startup_tracking();
-    
+
     // Create performance config based on environment
-    let perf_config = if std::env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string()) == "production" {
+    let perf_config = if std::env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string())
+        == "production"
+    {
         PerformanceConfig::production()
     } else {
         PerformanceConfig::development()
@@ -58,7 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "forbidden_library=info,tauri=warn".into())
+                .unwrap_or_else(|_| "forbidden_library=info,tauri=warn".into()),
         )
         .with_target(true)
         .with_thread_ids(true)
@@ -66,7 +68,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_line_number(true)
         .init();
 
-    info!("🚀 Forbidden Library v{} - VoidCat RDC Production", env!("CARGO_PKG_VERSION"));
+    info!(
+        "🚀 Forbidden Library v{} - VoidCat RDC Production",
+        env!("CARGO_PKG_VERSION")
+    );
     info!("📧 Support: SorrowsCry86@voidcat.org | 💰 CashApp: $WykeveTF");
     info!("🔍 Sentry monitoring active - VoidCat RDC Excellence Protocol");
 
@@ -91,12 +96,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     info!("🎉 Forbidden Library ready - VoidCat RDC Excellence Protocol Active");
                     Ok(())
-                },
+                }
                 Err(e) => {
                     error!("❌ Database initialization failed: {}", e);
                     Err(Box::new(std::io::Error::new(
                         std::io::ErrorKind::Other,
-                        format!("Database setup failed: {}", e)
+                        format!("Database setup failed: {}", e),
                     )))
                 }
             }
@@ -107,40 +112,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             commands::get_app_version,
             commands::initialize_database,
             commands::get_database_stats,
-
             // Conversation management commands
             commands::create_conversation,
             commands::get_conversations,
             commands::get_conversation,
             commands::delete_conversation,
             commands::archive_conversation,
-
             // Message management commands
             commands::add_message,
             commands::get_messages,
-
             // Persona management commands
             commands::create_persona,
             commands::get_personas,
             commands::get_persona,
             commands::update_persona,
             commands::delete_persona,
-
             // API configuration commands
             commands::store_api_config,
             commands::get_api_config,
             commands::delete_api_config,
-
             // AI integration commands
             commands::send_ai_request,
-
             // File management commands
             commands::export_conversation,
             commands::backup_database,
-
             // Monitoring and testing commands
             commands::test_sentry,
-
             // Desktop-specific commands
             commands::get_system_info,
             commands::show_open_dialog,
@@ -158,7 +155,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             commands::set_window_always_on_top,
             commands::minimize_to_tray,
             commands::check_for_updates,
-            
             // AI Provider commands
             commands::check_ai_provider_availability,
             commands::list_ai_provider_models,
@@ -174,7 +170,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(_) => {
             info!("✅ Forbidden Library terminated gracefully");
             Ok(())
-        },
+        }
         Err(e) => {
             error!("❌ Application error: {}", e);
             Err(Box::new(e) as Box<dyn std::error::Error>)

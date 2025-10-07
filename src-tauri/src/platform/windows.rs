@@ -42,14 +42,14 @@ pub enum SpecialFolder {
 /// Run a PowerShell command (Windows only)
 pub fn run_powershell_command(command: &str) -> std::io::Result<String> {
     use std::process::Command;
-    
+
     let output = Command::new("powershell")
         .arg("-NoProfile")
         .arg("-NonInteractive")
         .arg("-Command")
         .arg(command)
         .output()?;
-    
+
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
     } else {
@@ -86,7 +86,7 @@ mod tests {
         // These might not all be available in CI/test environments
         let desktop = get_special_folder(SpecialFolder::Desktop);
         let documents = get_special_folder(SpecialFolder::Documents);
-        
+
         // At least one should be available
         assert!(
             desktop.is_some() || documents.is_some(),

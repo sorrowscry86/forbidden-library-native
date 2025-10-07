@@ -176,7 +176,7 @@ impl AppError {
             AppError::Unexpected { message } => format!("Unexpected error: {}", message),
         }
     }
-    
+
     /// Get platform-specific error handling suggestions
     #[cfg(target_os = "windows")]
     pub fn platform_suggestion(&self) -> Option<String> {
@@ -193,7 +193,7 @@ impl AppError {
             _ => None,
         }
     }
-    
+
     #[cfg(not(target_os = "windows"))]
     pub fn platform_suggestion(&self) -> Option<String> {
         match self {

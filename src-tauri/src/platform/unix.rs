@@ -40,12 +40,9 @@ pub enum SpecialFolder {
 /// Run a shell command (Unix/Linux/macOS)
 pub fn run_shell_command(command: &str) -> std::io::Result<String> {
     use std::process::Command;
-    
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(command)
-        .output()?;
-    
+
+    let output = Command::new("sh").arg("-c").arg(command).output()?;
+
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
     } else {

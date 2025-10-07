@@ -5,14 +5,21 @@
 //! - Ollama (local models)
 //! - OpenAI API compatible endpoints
 
-use serde::{Deserialize, Serialize};
 use crate::errors::{AppError, AppResult};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AIProvider {
-    LMStudio { base_url: String },
-    Ollama { base_url: String },
-    OpenAICompatible { base_url: String, api_key: Option<String> },
+    LMStudio {
+        base_url: String,
+    },
+    Ollama {
+        base_url: String,
+    },
+    OpenAICompatible {
+        base_url: String,
+        api_key: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,9 +72,7 @@ impl AIProvider {
             AIProvider::LMStudio { base_url } => {
                 Self::send_openai_compatible_request(base_url, None, request).await
             }
-            AIProvider::Ollama { base_url } => {
-                Self::send_ollama_request(base_url, request).await
-            }
+            AIProvider::Ollama { base_url } => Self::send_ollama_request(base_url, request).await,
             AIProvider::OpenAICompatible { base_url, api_key } => {
                 Self::send_openai_compatible_request(base_url, api_key.clone(), request).await
             }
@@ -131,10 +136,7 @@ impl AIProvider {
     }
 
     /// Send request to Ollama endpoint
-    async fn send_ollama_request(
-        base_url: &str,
-        request: AIRequest,
-    ) -> AppResult<AIResponse> {
+    async fn send_ollama_request(base_url: &str, request: AIRequest) -> AppResult<AIResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/api/chat", base_url);
 

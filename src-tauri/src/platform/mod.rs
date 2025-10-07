@@ -17,7 +17,7 @@ pub fn get_app_data_dir() -> Option<PathBuf> {
     {
         windows::get_app_data_dir()
     }
-    
+
     #[cfg(not(target_os = "windows"))]
     {
         unix::get_app_data_dir()

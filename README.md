@@ -36,7 +36,31 @@ The Forbidden Library is a revolutionary native desktop application designed as 
 - **Node.js** (18 or later) - [Install Node.js](https://nodejs.org/)
 - **pnpm** (recommended) - `npm install -g pnpm`
 
+#### Platform-Specific Requirements
+
+**Windows**:
+- Microsoft C++ Build Tools ([Download](https://visualstudio.microsoft.com/visual-cpp-build-tools/))
+- WebView2 Runtime (usually pre-installed on Windows 11)
+- See [Windows Compatibility Guide](./docs/WINDOWS_COMPATIBILITY.md) for detailed setup
+
+**macOS**:
+- Xcode Command Line Tools (`xcode-select --install`)
+
+**Linux**:
+- GTK and WebKit dependencies (distribution-specific)
+
 ### Installation & Development
+
+#### Automated Setup (Windows)
+
+```powershell
+# Clone and setup in one step
+git clone https://github.com/sorrowscry86/forbidden-library-native.git
+cd forbidden-library-native
+.\scripts\setup-windows.ps1
+```
+
+#### Manual Setup (All Platforms)
 
 1. **Clone the repository**
    ```bash
@@ -121,6 +145,12 @@ forbidden-library-native/
 - **Personas**: Persistent memory system for different AI personalities
 - **Workflow Builder**: Automated task sequences and templates
 
+### 🤖 AI Provider Support
+- **Local Models**: LM Studio and Ollama integration for privacy-first AI
+- **Cloud APIs**: OpenAI, Anthropic, and custom endpoints
+- **Flexible Configuration**: Switch between providers seamlessly
+- See [AI Provider Guide](./docs/AI_PROVIDERS.md) for setup instructions
+
 ### 🎙️ Speech Laboratory
 - Real-time conversational AI with voice interaction
 - Advanced voice synthesis controls and fine-tuning
@@ -186,6 +216,8 @@ We welcome contributions from the community! Please read our [Contributing Guide
 - [Architecture Overview](./docs/architecture.md)
 - [API Reference](./docs/api.md)  
 - [MCP Integration Guide](./docs/mcp-integration.md)
+- [Windows Compatibility Guide](./docs/WINDOWS_COMPATIBILITY.md)
+- [AI Provider Integration](./docs/AI_PROVIDERS.md)
 - [Contributing Guide](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
 
