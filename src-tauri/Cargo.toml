@@ -55,6 +55,9 @@ ring = { workspace = true }
 # Regular expressions for validation
 regex = { workspace = true }
 
+# Cross-platform paths and directories
+dirs = { workspace = true }
+
 
 
 [dev-dependencies]

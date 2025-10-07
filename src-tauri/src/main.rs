@@ -158,6 +158,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             commands::set_window_always_on_top,
             commands::minimize_to_tray,
             commands::check_for_updates,
+            
+            // AI Provider commands
+            commands::check_ai_provider_availability,
+            commands::list_ai_provider_models,
+            commands::send_ai_provider_request,
         ])
         .run(tauri::generate_context!());
 

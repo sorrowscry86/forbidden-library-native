@@ -567,21 +567,15 @@ pub async fn read_from_clipboard() -> Result<String, String> {
 /// Get application data directory path
 #[tauri::command]
 pub async fn get_app_data_dir() -> Result<String, String> {
-    use std::env;
+    use crate::platform;
     
-    // Get the application data directory
-    let app_data = match env::var("APPDATA") {
-        Ok(path) => format!("{}/Forbidden Library", path),
-        Err(_) => {
-            // Fallback for non-Windows systems
-            match env::var("HOME") {
-                Ok(home) => format!("{}/.forbidden-library", home),
-                Err(_) => "/tmp/forbidden-library".to_string()
-            }
-        }
-    };
-    
-    Ok(app_data)
+    // Use cross-platform method to get app data directory
+    if let Some(app_data) = platform::get_app_data_dir() {
+        Ok(app_data.to_string_lossy().to_string())
+    } else {
+        // Ultimate fallback
+        Ok("/tmp/forbidden-library".to_string())
+    }
 }
 
 /// Open external URL in default browser
@@ -659,6 +653,126 @@ pub async fn check_for_updates() -> Result<serde_json::Value, String> {
     });
     
     Ok(update_info)
+}
+
+// ==================== AI PROVIDER COMMANDS ====================
+
+/// Check if an AI provider is available
+#[tauri::command]
+pub async fn check_ai_provider_availability(
+    provider_type: String,
+    base_url: Option<String>,
+    port: Option<u16>,
+) -> Result<bool, String> {
+    use crate::ai_providers::AIProvider;
+    
+    tracing::info!("Checking availability for provider: {}", provider_type);
+    
+    let provider = match provider_type.as_str() {
+        "lm_studio" => AIProvider::lm_studio(port),
+        "ollama" => AIProvider::ollama(port),
+        "openai_compatible" => {
+            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
+            AIProvider::openai_compatible(url, None)
+        }
+        _ => return Err(format!("Unknown provider type: {}", provider_type)),
+    };
+    
+    provider
+        .check_availability()
+        .await
+        .map_err(|e| format!("Failed to check availability: {}", e))
+}
+
+/// List available models from an AI provider
+#[tauri::command]
+pub async fn list_ai_provider_models(
+    provider_type: String,
+    base_url: Option<String>,
+    port: Option<u16>,
+) -> Result<Vec<String>, String> {
+    use crate::ai_providers::AIProvider;
+    
+    tracing::info!("Listing models for provider: {}", provider_type);
+    
+    let provider = match provider_type.as_str() {
+        "lm_studio" => AIProvider::lm_studio(port),
+        "ollama" => AIProvider::ollama(port),
+        "openai_compatible" => {
+            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
+            AIProvider::openai_compatible(url, None)
+        }
+        _ => return Err(format!("Unknown provider type: {}", provider_type)),
+    };
+    
+    provider
+        .list_models()
+        .await
+        .map_err(|e| format!("Failed to list models: {}", e))
+}
+
+/// Send a request to an AI provider
+#[tauri::command]
+pub async fn send_ai_provider_request(
+    provider_type: String,
+    model: String,
+    messages: Vec<serde_json::Value>,
+    base_url: Option<String>,
+    port: Option<u16>,
+    api_key: Option<String>,
+    temperature: Option<f32>,
+    max_tokens: Option<i32>,
+) -> Result<serde_json::Value, String> {
+    use crate::ai_providers::{AIProvider, AIRequest, ChatMessage};
+    
+    tracing::info!("Sending request to provider: {} with model: {}", provider_type, model);
+    
+    let provider = match provider_type.as_str() {
+        "lm_studio" => AIProvider::lm_studio(port),
+        "ollama" => AIProvider::ollama(port),
+        "openai_compatible" => {
+            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
+            AIProvider::openai_compatible(url, api_key)
+        }
+        _ => return Err(format!("Unknown provider type: {}", provider_type)),
+    };
+    
+    let chat_messages: Result<Vec<ChatMessage>, String> = messages
+        .iter()
+        .map(|m| {
+            Ok(ChatMessage {
+                role: m["role"]
+                    .as_str()
+                    .ok_or("Missing 'role' field")?
+                    .to_string(),
+                content: m["content"]
+                    .as_str()
+                    .ok_or("Missing 'content' field")?
+                    .to_string(),
+            })
+        })
+        .collect();
+    
+    let chat_messages = chat_messages?;
+    
+    let request = AIRequest {
+        model,
+        messages: chat_messages,
+        temperature,
+        max_tokens,
+        stream: false,
+    };
+    
+    let response = provider
+        .send_request(request)
+        .await
+        .map_err(|e| format!("Failed to send request: {}", e))?;
+    
+    Ok(serde_json::json!({
+        "content": response.content,
+        "model": response.model,
+        "tokens_used": response.tokens_used,
+    }))
 }
 
 #[cfg(test)]

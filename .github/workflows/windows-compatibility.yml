@@ -1,0 +1,107 @@
+name: Windows Compatibility Tests
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows_compatibility:
+    name: Windows Compatibility Tests
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+            node_modules/
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/Cargo.lock', '**/pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check platform-specific code
+        run: cargo check --target x86_64-pc-windows-msvc --manifest-path src-tauri/Cargo.toml
+
+      - name: Run platform-specific tests
+        run: cargo test --target x86_64-pc-windows-msvc --manifest-path src-tauri/Cargo.toml -- --test-threads=1
+
+      - name: Build frontend
+        run: pnpm run build
+
+      - name: Build Tauri app for Windows
+        run: pnpm run tauri build --target x86_64-pc-windows-msvc
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+      - name: Test PowerShell scripts
+        run: |
+          Get-ChildItem -Path scripts -Filter *.ps1 | ForEach-Object {
+            Write-Host "Checking syntax of $($_.Name)..."
+            $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $_.FullName -Raw), [ref]$null)
+          }
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-build
+          path: src-tauri/target/x86_64-pc-windows-msvc/release/bundle/
+
+  windows_integration:
+    name: Windows Integration Tests
+    runs-on: windows-latest
+    needs: windows_compatibility
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run integration tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml integration -- --test-threads=1
+
+      - name: Test Windows-specific features
+        run: |
+          Write-Host "Testing Windows-specific paths..."
+          $env:APPDATA = $env:APPDATA
+          cargo test --manifest-path src-tauri/Cargo.toml platform::windows -- --test-threads=1
