@@ -176,6 +176,36 @@ impl AppError {
             AppError::Unexpected { message } => format!("Unexpected error: {}", message),
         }
     }
+
+    /// Get platform-specific error handling suggestions
+    #[cfg(target_os = "windows")]
+    pub fn platform_suggestion(&self) -> Option<String> {
+        match self {
+            AppError::Io { message } if message.contains("Access is denied") => {
+                Some("Try running as administrator or check file permissions.".to_string())
+            }
+            AppError::Io { message } if message.contains("The system cannot find the path") => {
+                Some("Ensure the directory exists or create it first.".to_string())
+            }
+            AppError::Database { message } if message.contains("locked") => {
+                Some("Close other applications that might be accessing the database.".to_string())
+            }
+            _ => None,
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    pub fn platform_suggestion(&self) -> Option<String> {
+        match self {
+            AppError::Io { message } if message.contains("Permission denied") => {
+                Some("Check file permissions or try running with sudo.".to_string())
+            }
+            AppError::Database { message } if message.contains("locked") => {
+                Some("Close other applications that might be accessing the database.".to_string())
+            }
+            _ => None,
+        }
+    }
 }
 
 #[cfg(test)]

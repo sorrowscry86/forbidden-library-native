@@ -104,7 +104,9 @@ impl InputValidator {
 
         // Check for potentially harmful characters
         if self.contains_dangerous_chars(trimmed) {
-            return Err(AppError::validation("Conversation title contains invalid characters"));
+            return Err(AppError::validation(
+                "Conversation title contains invalid characters",
+            ));
         }
 
         Ok(trimmed.to_string())
@@ -124,7 +126,8 @@ impl InputValidator {
         }
 
         // Basic content sanitization - remove null bytes and other control characters
-        let sanitized = content.chars()
+        let sanitized = content
+            .chars()
             .filter(|c| !c.is_control() || *c == '\n' || *c == '\r' || *c == '\t')
             .collect();
 
@@ -150,7 +153,7 @@ impl InputValidator {
         let valid_regex = Regex::new(r"^[a-zA-Z0-9\s\-_]+$").unwrap();
         if !valid_regex.is_match(trimmed) {
             return Err(AppError::validation(
-                "Persona name can only contain letters, numbers, spaces, hyphens, and underscores"
+                "Persona name can only contain letters, numbers, spaces, hyphens, and underscores",
             ));
         }
 
@@ -169,7 +172,9 @@ impl InputValidator {
         }
 
         if self.contains_dangerous_chars(trimmed) {
-            return Err(AppError::validation("Persona description contains invalid characters"));
+            return Err(AppError::validation(
+                "Persona description contains invalid characters",
+            ));
         }
 
         Ok(trimmed.to_string())
@@ -189,9 +194,7 @@ impl InputValidator {
         }
 
         // System prompts can contain most characters but not null bytes
-        let sanitized = prompt.chars()
-            .filter(|c| *c != '\0')
-            .collect();
+        let sanitized = prompt.chars().filter(|c| *c != '\0').collect();
 
         Ok(sanitized)
     }
@@ -214,9 +217,7 @@ impl InputValidator {
         // API keys should be alphanumeric with some special characters
         let valid_regex = Regex::new(r"^[a-zA-Z0-9\-_.]+$").unwrap();
         if !valid_regex.is_match(trimmed) {
-            return Err(AppError::validation(
-                "API key contains invalid characters"
-            ));
+            return Err(AppError::validation("API key contains invalid characters"));
         }
 
         Ok(trimmed.to_string())
@@ -308,7 +309,10 @@ impl InputValidator {
             return Err(AppError::validation("UUID cannot be empty"));
         }
 
-        let uuid_regex = Regex::new(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$").unwrap();
+        let uuid_regex = Regex::new(
+            r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+        )
+        .unwrap();
         if !uuid_regex.is_match(trimmed) {
             return Err(AppError::validation("Invalid UUID format"));
         }
@@ -317,7 +321,13 @@ impl InputValidator {
     }
 
     /// Validate integer within a range
-    pub fn validate_integer_range(&self, value: i64, min: i64, max: i64, field_name: &str) -> AppResult<i64> {
+    pub fn validate_integer_range(
+        &self,
+        value: i64,
+        min: i64,
+        max: i64,
+        field_name: &str,
+    ) -> AppResult<i64> {
         if value < min || value > max {
             return Err(AppError::validation(format!(
                 "{} must be between {} and {}",
@@ -347,14 +357,31 @@ impl InputValidator {
     fn contains_dangerous_chars(&self, input: &str) -> bool {
         // Look for SQL injection patterns, script tags, etc.
         let dangerous_patterns = [
-            "<script", "</script>", "javascript:", "vbscript:",
-            "onload=", "onerror=", "onclick=", "onmouseover=",
-            "DROP TABLE", "INSERT INTO", "DELETE FROM", "UPDATE SET",
-            "UNION SELECT", "'", "\"", ";", "--", "/*", "*/"
+            "<script",
+            "</script>",
+            "javascript:",
+            "vbscript:",
+            "onload=",
+            "onerror=",
+            "onclick=",
+            "onmouseover=",
+            "DROP TABLE",
+            "INSERT INTO",
+            "DELETE FROM",
+            "UPDATE SET",
+            "UNION SELECT",
+            "'",
+            "\"",
+            ";",
+            "--",
+            "/*",
+            "*/",
         ];
 
         let input_lower = input.to_lowercase();
-        dangerous_patterns.iter().any(|pattern| input_lower.contains(pattern))
+        dangerous_patterns
+            .iter()
+            .any(|pattern| input_lower.contains(pattern))
     }
 
     /// Validate and sanitize JSON string
@@ -390,14 +417,20 @@ mod tests {
         let validator = InputValidator::default();
 
         // Valid titles
-        assert!(validator.validate_conversation_title("My Conversation").is_ok());
+        assert!(validator
+            .validate_conversation_title("My Conversation")
+            .is_ok());
         assert!(validator.validate_conversation_title("  Trimmed  ").is_ok());
 
         // Invalid titles
         assert!(validator.validate_conversation_title("").is_err());
         assert!(validator.validate_conversation_title("   ").is_err());
-        assert!(validator.validate_conversation_title(&"x".repeat(300)).is_err());
-        assert!(validator.validate_conversation_title("Title with <script>").is_err());
+        assert!(validator
+            .validate_conversation_title(&"x".repeat(300))
+            .is_err());
+        assert!(validator
+            .validate_conversation_title("Title with <script>")
+            .is_err());
     }
 
     #[test]

@@ -1,9 +1,9 @@
+use crate::errors::{AppError, AppResult};
+use r2d2::{Pool, PooledConnection};
+use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use crate::errors::{AppError, AppResult};
-use r2d2_sqlite::SqliteConnectionManager;
-use r2d2::{Pool, PooledConnection};
 use std::time::Duration;
 
 /// Connection pool type alias for cleaner code
@@ -83,7 +83,9 @@ impl DatabaseConfig {
 
         if let Some(min_idle) = self.pool_config.min_idle {
             if min_idle > self.pool_config.max_size {
-                return Err(AppError::validation("min_idle cannot be greater than max_size"));
+                return Err(AppError::validation(
+                    "min_idle cannot be greater than max_size",
+                ));
             }
         }
 
@@ -159,7 +161,8 @@ impl DatabaseManager {
 
     /// Create database manager with default configuration (for production use)
     pub fn new(app_handle: &tauri::AppHandle) -> AppResult<Self> {
-        let app_data_dir = app_handle.path_resolver()
+        let app_data_dir = app_handle
+            .path_resolver()
             .app_data_dir()
             .ok_or_else(|| AppError::io("Failed to get app data directory"))?;
 
@@ -182,7 +185,8 @@ impl DatabaseManager {
 
     /// Get a connection from the pool
     pub fn get_connection(&self) -> AppResult<PooledSqliteConnection> {
-        self.pool.get()
+        self.pool
+            .get()
             .map_err(|e| AppError::database(format!("Failed to get connection from pool: {}", e)))
     }
 
@@ -191,15 +195,17 @@ impl DatabaseManager {
         let conn = self.get_connection()?;
 
         for pragma in &self.config.pragma_settings {
-            conn.execute_batch(pragma)
-                .map_err(|e| AppError::database(format!("Failed to apply pragma '{}': {}", pragma, e)))?;
+            conn.execute_batch(pragma).map_err(|e| {
+                AppError::database(format!("Failed to apply pragma '{}': {}", pragma, e))
+            })?;
         }
 
         // Apply encryption if configured
         if !self.config.encryption_key.is_empty() {
             let encryption_cmd = format!("PRAGMA key = '{}';", self.config.encryption_key);
-            conn.execute_batch(&encryption_cmd)
-                .map_err(|e| AppError::encryption(format!("Failed to set encryption key: {}", e)))?;
+            conn.execute_batch(&encryption_cmd).map_err(|e| {
+                AppError::encryption(format!("Failed to set encryption key: {}", e))
+            })?;
         }
 
         Ok(())
@@ -403,10 +409,9 @@ mod tests {
 
         let connection = Connection::open(&db_path).unwrap();
         // Test schema creation without encryption for unit tests
-        connection.execute(
-            "CREATE TABLE test (id INTEGER PRIMARY KEY);",
-            [],
-        ).unwrap();
+        connection
+            .execute("CREATE TABLE test (id INTEGER PRIMARY KEY);", [])
+            .unwrap();
 
         assert!(db_path.exists());
     }
