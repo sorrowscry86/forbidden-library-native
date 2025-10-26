@@ -54,3 +54,38 @@ export interface AiResponse {
   tokens_used: number;
   processing_time_ms: number;
 }
+
+export interface ProjectMilestone {
+  id: string;
+  title: string;
+  description: string | null;
+  due_date: string;
+  completed: boolean;
+  completed_at: string | null;
+}
+
+export interface RepositoryStats {
+  total_commits: number;
+  total_lines: number;
+  languages: Record<string, number>;
+  last_commit_date: string;
+  contributors: string[];
+}
+
+export interface ProjectMetadata {
+  technology_stack: string[];
+  team_members: string[];
+  milestones: ProjectMilestone[];
+  repository_stats: RepositoryStats;
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  repository_url: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  metadata?: ProjectMetadata | null;
+}
