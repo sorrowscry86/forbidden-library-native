@@ -1,4 +1,4 @@
-﻿//! Error handling for monitoring
+//! Error handling for monitoring
 //!
 //! This module provides standardized error types for monitoring operations.
 
@@ -9,10 +9,10 @@ use std::fmt;
 pub enum MonitoringError<E> {
     /// Error from the operation being monitored
     Operation(E),
-    
+
     /// Panic occurred during the operation
     Panic(String),
-    
+
     /// Timeout occurred during the operation
     Timeout(String),
 }

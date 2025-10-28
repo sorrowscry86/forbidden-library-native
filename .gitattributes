@@ -1,0 +1,39 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Explicitly declare text files to be normalized
+*.rs text
+*.ts text
+*.js text
+*.svelte text
+*.toml text
+*.json text
+*.md text
+*.html text
+*.css text
+*.scss text
+*.yml text
+*.yaml text
+*.sh text eol=lf
+*.ps1 text eol=crlf
+
+# Configuration files
+.gitignore text
+.gitattributes text
+.editorconfig text
+.env.example text
+
+# Binary files should not be modified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.db binary
+*.sqlite binary
+*.sqlite3 binary

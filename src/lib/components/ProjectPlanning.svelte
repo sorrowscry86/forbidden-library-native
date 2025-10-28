@@ -111,19 +111,55 @@
     
     function toggleMilestoneStatus(milestoneId: string) {
         if (!currentProject?.metadata?.milestones) return;
-        
-        const milestoneIndex = currentProject.metadata.milestones.findIndex(m => m.id === milestoneId);
+
+        const milestoneIndex = currentProject.metadata.milestones.findIndex((m: ProjectMilestone) => m.id === milestoneId);
         if (milestoneIndex === -1) return;
-        
+
         const milestone = currentProject.metadata.milestones[milestoneIndex];
         const updatedMilestone = {
             ...milestone,
             completed: !milestone.completed,
             completed_at: !milestone.completed ? new Date().toISOString() : null
         };
-        
+
         currentProject.metadata.milestones[milestoneIndex] = updatedMilestone;
         currentProject = {...currentProject}; // Trigger reactivity
+    }
+
+    async function createNewProject() {
+        const projectName = prompt('Enter project name:');
+        if (!projectName?.trim()) return;
+
+        try {
+            // In a real implementation, this would call the backend
+            const newProject: Project = {
+                id: Date.now(),
+                name: projectName,
+                description: 'New project description',
+                repository_url: null,
+                status: 'Active',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                metadata: {
+                    technology_stack: [],
+                    team_members: [],
+                    milestones: [],
+                    repository_stats: {
+                        total_commits: 0,
+                        total_lines: 0,
+                        languages: {},
+                        last_commit_date: new Date().toISOString(),
+                        contributors: []
+                    }
+                }
+            };
+
+            projects = [...projects, newProject];
+            currentProject = newProject;
+        } catch (error) {
+            console.error('Failed to create project:', error);
+            alert('Failed to create project. Please try again.');
+        }
     }
 </script>
 
@@ -131,23 +167,35 @@
     <!-- Project Header -->
     <div class="bg-gray-800 border-b border-gray-700 px-6 py-4">
         <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-lg font-semibold text-white">Software Planning</h2>
-                <p class="text-sm text-gray-400">
-                    {projects.length} projects available
-                </p>
+            <div class="flex items-center space-x-4">
+                <a
+                    href="/"
+                    class="p-2 text-gray-400 hover:text-white transition-colors"
+                    title="Back to Conversations"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <div>
+                    <h2 class="text-lg font-semibold text-white">Software Planning</h2>
+                    <p class="text-sm text-gray-400">
+                        {projects.length} projects available
+                    </p>
+                </div>
             </div>
-            
+
             <div class="flex items-center space-x-2">
                 <button
                     class="p-2 text-gray-400 hover:text-white transition-colors"
                     title="Create new project"
+                    on:click={createNewProject}
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                 </button>
-                
+
                 <button
                     class="p-2 text-gray-400 hover:text-white transition-colors"
                     title="Refresh projects"
@@ -324,15 +372,16 @@
                             <h4 class="text-sm font-medium text-gray-400 mb-2">Languages</h4>
                             <div class="space-y-2">
                                 {#each Object.entries(currentProject.metadata.repository_stats.languages) as [language, lines]}
+                                    {@const lineCount = Number(lines)}
                                     <div>
                                         <div class="flex justify-between text-xs mb-1">
                                             <span class="text-white">{language}</span>
-                                            <span class="text-gray-400">{lines.toLocaleString()} lines ({Math.round(lines / currentProject.metadata.repository_stats.total_lines * 100)}%)</span>
+                                            <span class="text-gray-400">{lineCount.toLocaleString()} lines ({Math.round(lineCount / currentProject.metadata.repository_stats.total_lines * 100)}%)</span>
                                         </div>
                                         <div class="w-full bg-gray-800 rounded-full h-2">
                                             <div
                                                 class="bg-purple-600 h-2 rounded-full"
-                                                style="width: {Math.round(lines / currentProject.metadata.repository_stats.total_lines * 100)}%"
+                                                style="width: {Math.round(lineCount / currentProject.metadata.repository_stats.total_lines * 100)}%"
                                             ></div>
                                         </div>
                                     </div>

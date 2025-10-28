@@ -87,3 +87,13 @@ ring = "0.17"
 
 # Date and time
 chrono = { version = "0.4", features = ["serde"] }
+
+# Database connection pooling
+r2d2 = "0.8"
+r2d2_sqlite = "0.23"
+
+# Regular expressions for validation
+regex = "1.10"
+
+# Cross-platform paths and directories
+dirs = "5.0"

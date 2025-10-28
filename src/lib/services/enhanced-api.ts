@@ -281,7 +281,7 @@ export async function invokeWithSchemaValidation<T>(
   if (validationResult !== true) {
     throw new AppError({
       message: 'Validation failed',
-      details: validationResult,
+      details: typeof validationResult === 'string' ? validationResult : 'Validation failed',
       category: ErrorCategory.VALIDATION,
       severity: ErrorSeverity.WARNING,
       context: { command, args, schema }

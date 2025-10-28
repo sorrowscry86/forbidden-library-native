@@ -4,7 +4,8 @@
     "beforeDevCommand": "pnpm run dev",
     "beforeBuildCommand": "pnpm run build",
     "devPath": "http://localhost:1430",
-    "distDir": "../build"
+    "distDir": "../build",
+    "withGlobalTauri": false
   },
   "package": {
     "productName": "Forbidden Library",
@@ -69,12 +70,12 @@
           {
             "name": "sh",
             "cmd": "sh",
-            "args": ["-c", { "validator": "\\S+" }]
+            "args": ["-c", { "validator": "\\\\S+" }]
           },
           {
             "name": "cmd",
             "cmd": "cmd",
-            "args": ["/C", { "validator": "\\S+" }]
+            "args": ["/C", { "validator": "\\\\S+" }]
           }
         ]
       },
@@ -123,6 +124,36 @@
       "iconPath": "icons/icon.png",
       "iconAsTemplate": true,
       "menuOnLeftClick": false
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "com.voidcat.forbidden-library",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "windows": {
+        "webviewInstallMode": "downloadBootstrapper",
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      },
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "linux": {
+        "deb": {
+          "depends": []
+        }
+      }
     },
     "updater": {
       "active": false

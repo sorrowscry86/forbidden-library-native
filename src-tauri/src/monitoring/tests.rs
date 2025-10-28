@@ -1,10 +1,10 @@
-﻿//! Tests for the monitoring module
+//! Tests for the monitoring module
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::{Duration, Instant};
     use std::thread;
+    use std::time::{Duration, Instant};
 
     #[test]
     fn test_performance_config_default() {
@@ -41,7 +41,7 @@ mod tests {
             .ipc_threshold_ms(75)
             .ai_request_threshold_ms(1000)
             .build();
-        
+
         assert_eq!(config.startup_threshold_ms, 500);
         assert_eq!(config.database_threshold_ms, 25);
         assert_eq!(config.ipc_threshold_ms, 75);
@@ -61,9 +61,9 @@ mod tests {
         let result = PerformanceMonitor::track_database_operation(
             "test_operation",
             || Ok::<_, Box<dyn std::error::Error>>("success"),
-            None
+            None,
         );
-        
+
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "success");
     }
@@ -73,15 +73,15 @@ mod tests {
         let result: Result<(), _> = PerformanceMonitor::track_database_operation(
             "test_operation",
             || Err::<(), _>("test error".into()),
-            None
+            None,
         );
-        
+
         assert!(result.is_err());
         match result {
             Err(MonitoringError::Operation(e)) => {
                 let error_msg = format!("{}", e);
                 assert!(error_msg.contains("test error"));
-            },
+            }
             _ => panic!("Expected Operation error"),
         }
     }
@@ -91,9 +91,9 @@ mod tests {
         let result = PerformanceMonitor::track_ipc_command(
             "test_command",
             || Ok::<_, String>("success"),
-            None
+            None,
         );
-        
+
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "success");
     }
@@ -103,36 +103,28 @@ mod tests {
         let result: Result<(), _> = PerformanceMonitor::track_ipc_command(
             "test_command",
             || Err::<(), _>("test error"),
-            None
+            None,
         );
-        
+
         assert!(result.is_err());
         match result {
             Err(MonitoringError::Operation(e)) => {
                 let error_msg = format!("{}", e);
                 assert_eq!(error_msg, "test error");
-            },
+            }
             _ => panic!("Expected Operation error"),
         }
     }
 
     #[test]
     fn test_ai_request_success() {
-        PerformanceMonitor::track_ai_request(
-            "test_model",
-            Some(100),
-            Ok::<(), String>(())
-        );
+        PerformanceMonitor::track_ai_request("test_model", Some(100), Ok::<(), String>(()));
         // No assertion needed, just checking it doesn't panic
     }
 
     #[test]
     fn test_ai_request_error() {
-        PerformanceMonitor::track_ai_request(
-            "test_model",
-            Some(100),
-            Err::<(), _>("test error")
-        );
+        PerformanceMonitor::track_ai_request("test_model", Some(100), Err::<(), _>("test error"));
         // No assertion needed, just checking it doesn't panic
     }
 

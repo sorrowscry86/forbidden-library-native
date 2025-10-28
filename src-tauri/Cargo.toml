@@ -29,6 +29,10 @@ tokio = { workspace = true }
 # Database
 rusqlite = { workspace = true }
 
+# Database connection pooling
+r2d2 = { workspace = true }
+r2d2_sqlite = { workspace = true }
+
 # Logging
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
@@ -47,6 +51,12 @@ chrono = { workspace = true }
 reqwest = { workspace = true }
 walkdir = { workspace = true }
 ring = { workspace = true }
+
+# Regular expressions for validation
+regex = { workspace = true }
+
+# Cross-platform paths and directories
+dirs = { workspace = true }
 
 
 

@@ -24,7 +24,7 @@
             
             if (environment === 'tauri') {
                 const config = await invokeWithTimeout('get_api_config', { provider: selectedProvider }, ms(8));
-                if (config) {
+                if (config && config.length > 0) {
                     apiKey = config[0] || '';
                 }
             }
@@ -60,7 +60,18 @@
 </script>
 
 <div class="container mx-auto px-6 py-8 max-w-4xl">
-    <h1 class="text-2xl font-bold text-white mb-6">Settings</h1>
+    <div class="flex items-center space-x-4 mb-6">
+        <a
+            href="/"
+            class="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700"
+            title="Back to Conversations"
+        >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+        </a>
+        <h1 class="text-2xl font-bold text-white">Settings</h1>
+    </div>
     
     {#if loading}
         <div class="flex justify-center py-8">

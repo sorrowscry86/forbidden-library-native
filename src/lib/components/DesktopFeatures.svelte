@@ -40,8 +40,8 @@
 			errorStore.addError({
 				message: 'Failed to load desktop information',
 				details: error instanceof Error ? error.message : String(error),
-				category: 'api',
-				severity: 'warning'
+				category: 'API' as any,
+				severity: 'WARNING' as any
 			});
 		} finally {
 			loading = false;
@@ -165,7 +165,14 @@
 
 <div class="desktop-features">
 	<div class="header">
-		<h2>🖥️ Desktop Features</h2>
+		<div class="header-top">
+			<a href="/" class="back-button" title="Back to Conversations">
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+				</svg>
+			</a>
+			<h2>🖥️ Desktop Features</h2>
+		</div>
 		<p class="status">
 			{#if isDesktop}
 				<span class="badge success">✓ Desktop Mode</span>
@@ -333,8 +340,35 @@
 		margin-bottom: 2rem;
 	}
 
+	.header-top {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 1rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.back-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.5rem;
+		color: #6b7280;
+		transition: color 0.2s ease;
+		text-decoration: none;
+	}
+
+	.back-button:hover {
+		color: #4f46e5;
+	}
+
+	.back-button svg {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+
 	.header h2 {
-		margin: 0 0 0.5rem 0;
+		margin: 0;
 		color: var(--primary-color, #4f46e5);
 	}
 

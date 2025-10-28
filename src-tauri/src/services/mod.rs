@@ -1,7 +1,7 @@
-use crate::models::{Conversation, Message, Persona};
 use crate::database::DatabaseManager;
-use rusqlite::{Result as SqliteResult};
+use crate::models::{Conversation, Message, Persona};
 use chrono::{DateTime, Utc};
+use rusqlite::Result as SqliteResult;
 use uuid::Uuid;
 
 /// Conversation service - Manages chat sessions and message history
@@ -15,20 +15,27 @@ impl ConversationService {
     }
 
     /// Create new conversation
-    pub fn create_conversation(&self, title: String, persona_id: Option<i64>) -> SqliteResult<Conversation> {
+    pub fn create_conversation(
+        &self,
+        title: String,
+        persona_id: Option<i64>,
+    ) -> SqliteResult<Conversation> {
         let conversation = Conversation::new(title, persona_id);
         let uuid_str = conversation.uuid.to_string();
 
         let conn = self.db.connection().lock().unwrap();
         let mut stmt = conn.prepare(
             "INSERT INTO conversations (uuid, title, persona_id, created_at, updated_at, archived)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         )?;
 
         stmt.execute([
             &uuid_str,
             &conversation.title,
-            &conversation.persona_id.map(|id| id.to_string()).unwrap_or_default(),
+            &conversation
+                .persona_id
+                .map(|id| id.to_string())
+                .unwrap_or_default(),
             &conversation.created_at.to_rfc3339(),
             &conversation.updated_at.to_rfc3339(),
             &conversation.archived.to_string(),
@@ -41,7 +48,11 @@ impl ConversationService {
     }
 
     /// Get all conversations with pagination
-    pub fn get_conversations(&self, limit: Option<i32>, offset: Option<i32>) -> SqliteResult<Vec<Conversation>> {
+    pub fn get_conversations(
+        &self,
+        limit: Option<i32>,
+        offset: Option<i32>,
+    ) -> SqliteResult<Vec<Conversation>> {
         let limit = limit.unwrap_or(50);
         let offset = offset.unwrap_or(0);
 
@@ -50,7 +61,7 @@ impl ConversationService {
             "SELECT id, uuid, title, persona_id, created_at, updated_at, archived
              FROM conversations
              ORDER BY updated_at DESC
-             LIMIT ?1 OFFSET ?2"
+             LIMIT ?1 OFFSET ?2",
         )?;
 
         let rows = stmt.query_map([limit, offset], |row| {
@@ -60,9 +71,11 @@ impl ConversationService {
                 title: row.get(2)?,
                 persona_id: row.get::<_, Option<i64>>(3)?,
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
                 updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
                 archived: row.get::<_, String>(6)? == "true",
                 metadata: None, // Load separately if needed
             })
@@ -81,7 +94,7 @@ impl ConversationService {
         let mut stmt = conn.prepare(
             "SELECT id, uuid, title, persona_id, created_at, updated_at, archived
              FROM conversations
-             WHERE id = ?1"
+             WHERE id = ?1",
         )?;
 
         let mut rows = stmt.query_map([id], |row| {
@@ -91,9 +104,11 @@ impl ConversationService {
                 title: row.get(2)?,
                 persona_id: row.get::<_, Option<i64>>(3)?,
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
                 updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
                 archived: row.get::<_, String>(6)? == "true",
                 metadata: None,
             })
@@ -105,9 +120,60 @@ impl ConversationService {
         }
     }
 
+    /// Search conversations by title or content
+    pub fn search_conversations(
+        &self,
+        query: &str,
+        limit: Option<i32>,
+    ) -> SqliteResult<Vec<Conversation>> {
+        let limit = limit.unwrap_or(50);
+        let search_pattern = format!("%{}%", query);
+
+        let conn = self.db.connection().lock().unwrap();
+
+        // Search by title or messages content
+        let mut stmt = conn.prepare(
+            "SELECT DISTINCT c.id, c.uuid, c.title, c.persona_id, c.created_at, c.updated_at, c.archived
+             FROM conversations c
+             LEFT JOIN messages m ON c.id = m.conversation_id
+             WHERE c.title LIKE ?1 OR m.content LIKE ?1
+             ORDER BY c.updated_at DESC
+             LIMIT ?2",
+        )?;
+
+        let rows = stmt.query_map(params![&search_pattern, limit], |row| {
+            Ok(Conversation {
+                id: Some(row.get::<_, i64>(0)?),
+                uuid: Uuid::parse_str(&row.get::<_, String>(1)?).unwrap_or_default(),
+                title: row.get(2)?,
+                persona_id: row.get::<_, Option<i64>>(3)?,
+                created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
+                updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
+                archived: row.get::<_, String>(6)? == "true",
+                metadata: None,
+            })
+        })?;
+
+        let mut conversations = Vec::new();
+        for row in rows {
+            conversations.push(row?);
+        }
+        Ok(conversations)
+    }
+
     /// Add message to conversation
-    pub fn add_message(&self, conversation_id: i64, role: crate::models::MessageRole,
-                      content: String, tokens_used: Option<i32>, model_used: Option<String>) -> SqliteResult<Message> {
+    pub fn add_message(
+        &self,
+        conversation_id: i64,
+        role: crate::models::MessageRole,
+        content: String,
+        tokens_used: Option<i32>,
+        model_used: Option<String>,
+    ) -> SqliteResult<Message> {
         let message = Message::new(conversation_id, role, content);
 
         let conn = self.db.connection().lock().unwrap();
@@ -135,7 +201,7 @@ impl ConversationService {
         // Update conversation's updated_at timestamp
         conn.execute(
             "UPDATE conversations SET updated_at = ?1 WHERE id = ?2",
-            [&Utc::now().to_rfc3339(), &conversation_id.to_string()]
+            [&Utc::now().to_rfc3339(), &conversation_id.to_string()],
         )?;
 
         let id = conn.last_insert_rowid();
@@ -153,7 +219,7 @@ impl ConversationService {
             "SELECT id, conversation_id, role, content, created_at, tokens_used, model_used
              FROM messages
              WHERE conversation_id = ?1
-             ORDER BY created_at ASC"
+             ORDER BY created_at ASC",
         )?;
 
         let rows = stmt.query_map([conversation_id], |row| {
@@ -171,8 +237,11 @@ impl ConversationService {
                 role,
                 content: row.get(3)?,
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                    .unwrap_or_default().with_timezone(&Utc),
-                tokens_used: row.get::<_, Option<String>>(5)?.and_then(|s| s.parse().ok()),
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
+                tokens_used: row
+                    .get::<_, Option<String>>(5)?
+                    .and_then(|s| s.parse().ok()),
                 model_used: row.get::<_, Option<String>>(6)?.filter(|s| !s.is_empty()),
                 metadata: None,
             })
@@ -198,7 +267,11 @@ impl ConversationService {
         let conn = self.db.connection().lock().unwrap();
         conn.execute(
             "UPDATE conversations SET archived = ?1, updated_at = ?2 WHERE id = ?3",
-            [&archived.to_string(), &Utc::now().to_rfc3339(), &id.to_string()]
+            [
+                &archived.to_string(),
+                &Utc::now().to_rfc3339(),
+                &id.to_string(),
+            ],
         )?;
         Ok(())
     }
@@ -215,8 +288,12 @@ impl PersonaService {
     }
 
     /// Create new persona
-    pub fn create_persona(&self, name: String, description: Option<String>,
-                         system_prompt: String) -> SqliteResult<Persona> {
+    pub fn create_persona(
+        &self,
+        name: String,
+        description: Option<String>,
+        system_prompt: String,
+    ) -> SqliteResult<Persona> {
         let persona = Persona::new(name, description, system_prompt);
 
         let conn = self.db.connection().lock().unwrap();
@@ -248,7 +325,7 @@ impl PersonaService {
             "SELECT id, name, description, system_prompt, created_at, updated_at, active
              FROM personas
              WHERE active = 'true'
-             ORDER BY name ASC"
+             ORDER BY name ASC",
         )?;
 
         let rows = stmt.query_map([], |row| {
@@ -257,16 +334,22 @@ impl PersonaService {
                 name: row.get(1)?,
                 description: {
                     let desc: String = row.get(2)?;
-                    if desc.is_empty() { None } else { Some(desc) }
+                    if desc.is_empty() {
+                        None
+                    } else {
+                        Some(desc)
+                    }
                 },
                 system_prompt: row.get(3)?,
                 avatar_path: None,
                 memory_context: None,
                 settings: None,
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
                 updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
                 active: row.get::<_, String>(6)? == "true",
             })
         })?;
@@ -284,7 +367,7 @@ impl PersonaService {
         let mut stmt = conn.prepare(
             "SELECT id, name, description, system_prompt, created_at, updated_at, active
              FROM personas
-             WHERE id = ?1"
+             WHERE id = ?1",
         )?;
 
         let mut rows = stmt.query_map([id], |row| {
@@ -293,16 +376,22 @@ impl PersonaService {
                 name: row.get(1)?,
                 description: {
                     let desc: String = row.get(2)?;
-                    if desc.is_empty() { None } else { Some(desc) }
+                    if desc.is_empty() {
+                        None
+                    } else {
+                        Some(desc)
+                    }
                 },
                 system_prompt: row.get(3)?,
                 avatar_path: None,
                 memory_context: None,
                 settings: None,
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
                 updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                    .unwrap_or_default().with_timezone(&Utc),
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
                 active: row.get::<_, String>(6)? == "true",
             })
         })?;
@@ -314,8 +403,13 @@ impl PersonaService {
     }
 
     /// Update persona
-    pub fn update_persona(&self, id: i64, name: Option<String>,
-                         description: Option<String>, system_prompt: Option<String>) -> SqliteResult<()> {
+    pub fn update_persona(
+        &self,
+        id: i64,
+        name: Option<String>,
+        description: Option<String>,
+        system_prompt: Option<String>,
+    ) -> SqliteResult<()> {
         let mut query_parts = Vec::new();
         let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
@@ -370,8 +464,12 @@ impl ApiService {
     }
 
     /// Store API configuration (encrypt sensitive data)
-    pub fn store_api_config(&self, provider: String, api_key: String,
-                           base_url: Option<String>) -> SqliteResult<()> {
+    pub fn store_api_config(
+        &self,
+        provider: String,
+        api_key: String,
+        base_url: Option<String>,
+    ) -> SqliteResult<()> {
         // TODO: Implement proper encryption for API keys
         let encrypted_key = api_key; // Placeholder - implement actual encryption
 
@@ -388,7 +486,7 @@ impl ApiService {
                 &Utc::now().to_rfc3339(),
                 &Utc::now().to_rfc3339(),
                 "true",
-            ]
+            ],
         )?;
         Ok(())
     }
@@ -397,14 +495,18 @@ impl ApiService {
     pub fn get_api_config(&self, provider: &str) -> SqliteResult<Option<(String, Option<String>)>> {
         let conn = self.db.connection().lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT api_key, base_url FROM api_configs WHERE provider = ?1 AND active = 'true'"
+            "SELECT api_key, base_url FROM api_configs WHERE provider = ?1 AND active = 'true'",
         )?;
 
         let mut rows = stmt.query_map([provider], |row| {
             let encrypted_key: String = row.get(0)?;
             let base_url: Option<String> = {
                 let url: String = row.get(1)?;
-                if url.is_empty() { None } else { Some(url) }
+                if url.is_empty() {
+                    None
+                } else {
+                    Some(url)
+                }
             };
 
             // TODO: Implement proper decryption for API keys
@@ -424,7 +526,7 @@ impl ApiService {
         let conn = self.db.connection().lock().unwrap();
         conn.execute(
             "UPDATE api_configs SET active = 'false', updated_at = ?1 WHERE provider = ?2",
-            [&Utc::now().to_rfc3339(), provider]
+            [&Utc::now().to_rfc3339(), provider],
         )?;
         Ok(())
     }
@@ -460,8 +562,7 @@ mod tests {
         let db_path = temp_dir.path().join("test.db");
 
         // Initialize test database
-        let db_manager = DatabaseManager::new_in_memory()
-            .expect("Failed to create test database");
+        let db_manager = DatabaseManager::new_in_memory().expect("Failed to create test database");
 
         let service = ConversationService::new(Arc::new(db_manager));
 
@@ -485,10 +586,7 @@ mod tests {
     fn test_create_conversation_with_persona() {
         let (service, _temp_dir) = setup_test_environment();
 
-        let result = service.create_conversation(
-            "Test Conversation".to_string(),
-            Some(1)
-        );
+        let result = service.create_conversation("Test Conversation".to_string(), Some(1));
         assert!(result.is_ok());
 
         let conversation = result.unwrap();
@@ -523,10 +621,9 @@ mod tests {
 
         // Create multiple conversations
         for i in 0..5 {
-            service.create_conversation(
-                format!("Conversation {}", i),
-                None
-            ).unwrap();
+            service
+                .create_conversation(format!("Conversation {}", i), None)
+                .unwrap();
         }
 
         let result = service.get_conversations(None, None);
@@ -541,10 +638,9 @@ mod tests {
 
         // Create multiple conversations
         for i in 0..10 {
-            service.create_conversation(
-                format!("Conversation {}", i),
-                None
-            ).unwrap();
+            service
+                .create_conversation(format!("Conversation {}", i), None)
+                .unwrap();
         }
 
         // Test limit
@@ -573,7 +669,9 @@ mod tests {
     fn test_get_conversation_found() {
         let (service, _temp_dir) = setup_test_environment();
 
-        let created = service.create_conversation("Test Conversation".to_string(), None).unwrap();
+        let created = service
+            .create_conversation("Test Conversation".to_string(), None)
+            .unwrap();
         let conversation_id = created.id.unwrap();
 
         let result = service.get_conversation(conversation_id);
@@ -588,7 +686,9 @@ mod tests {
     fn test_delete_conversation() {
         let (service, _temp_dir) = setup_test_environment();
 
-        let created = service.create_conversation("Test Conversation".to_string(), None).unwrap();
+        let created = service
+            .create_conversation("Test Conversation".to_string(), None)
+            .unwrap();
         let conversation_id = created.id.unwrap();
 
         let result = service.delete_conversation(conversation_id);
@@ -612,7 +712,9 @@ mod tests {
     fn test_archive_conversation() {
         let (service, _temp_dir) = setup_test_environment();
 
-        let created = service.create_conversation("Test Conversation".to_string(), None).unwrap();
+        let created = service
+            .create_conversation("Test Conversation".to_string(), None)
+            .unwrap();
         let conversation_id = created.id.unwrap();
 
         let result = service.set_conversation_archived(conversation_id, true);
@@ -639,14 +741,17 @@ mod tests {
 
         // Create 100 conversations rapidly
         for i in 0..100 {
-            service.create_conversation(
-                format!("Performance Test {}", i),
-                None
-            ).unwrap();
+            service
+                .create_conversation(format!("Performance Test {}", i), None)
+                .unwrap();
         }
 
         let create_duration = start.elapsed();
-        assert!(create_duration.as_millis() < 500, "Conversation creation took too long: {:?}", create_duration);
+        assert!(
+            create_duration.as_millis() < 500,
+            "Conversation creation took too long: {:?}",
+            create_duration
+        );
 
         // Test retrieval performance
         let retrieve_start = std::time::Instant::now();
@@ -654,7 +759,11 @@ mod tests {
         let retrieve_duration = retrieve_start.elapsed();
 
         assert_eq!(conversations.len(), 100);
-        assert!(retrieve_duration.as_millis() < 100, "Conversation retrieval took too long: {:?}", retrieve_duration);
+        assert!(
+            retrieve_duration.as_millis() < 100,
+            "Conversation retrieval took too long: {:?}",
+            retrieve_duration
+        );
     }
 
     /// Security test for SQL injection prevention
@@ -682,11 +791,17 @@ mod tests {
         let (service, _temp_dir) = setup_test_environment();
 
         // Create conversations with delays
-        service.create_conversation("First".to_string(), None).unwrap();
+        service
+            .create_conversation("First".to_string(), None)
+            .unwrap();
         std::thread::sleep(std::time::Duration::from_millis(10));
-        service.create_conversation("Second".to_string(), None).unwrap();
+        service
+            .create_conversation("Second".to_string(), None)
+            .unwrap();
         std::thread::sleep(std::time::Duration::from_millis(10));
-        service.create_conversation("Third".to_string(), None).unwrap();
+        service
+            .create_conversation("Third".to_string(), None)
+            .unwrap();
 
         let conversations = service.get_conversations(None, None).unwrap();
         assert_eq!(conversations.len(), 3);
