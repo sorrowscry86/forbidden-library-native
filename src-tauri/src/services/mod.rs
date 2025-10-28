@@ -120,6 +120,51 @@ impl ConversationService {
         }
     }
 
+    /// Search conversations by title or content
+    pub fn search_conversations(
+        &self,
+        query: &str,
+        limit: Option<i32>,
+    ) -> SqliteResult<Vec<Conversation>> {
+        let limit = limit.unwrap_or(50);
+        let search_pattern = format!("%{}%", query);
+
+        let conn = self.db.connection().lock().unwrap();
+
+        // Search by title or messages content
+        let mut stmt = conn.prepare(
+            "SELECT DISTINCT c.id, c.uuid, c.title, c.persona_id, c.created_at, c.updated_at, c.archived
+             FROM conversations c
+             LEFT JOIN messages m ON c.id = m.conversation_id
+             WHERE c.title LIKE ?1 OR m.content LIKE ?1
+             ORDER BY c.updated_at DESC
+             LIMIT ?2",
+        )?;
+
+        let rows = stmt.query_map(params![&search_pattern, limit], |row| {
+            Ok(Conversation {
+                id: Some(row.get::<_, i64>(0)?),
+                uuid: Uuid::parse_str(&row.get::<_, String>(1)?).unwrap_or_default(),
+                title: row.get(2)?,
+                persona_id: row.get::<_, Option<i64>>(3)?,
+                created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
+                updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
+                archived: row.get::<_, String>(6)? == "true",
+                metadata: None,
+            })
+        })?;
+
+        let mut conversations = Vec::new();
+        for row in rows {
+            conversations.push(row?);
+        }
+        Ok(conversations)
+    }
+
     /// Add message to conversation
     pub fn add_message(
         &self,

@@ -91,6 +91,30 @@ pub async fn get_conversations(
         .map_err(|e| format!("Failed to get conversations: {}", e))
 }
 
+/// Search conversations by title or content
+#[tauri::command]
+pub async fn search_conversations(
+    query: String,
+    limit: Option<i32>,
+    state: State<'_, AppState>,
+) -> Result<Vec<Conversation>, String> {
+    tracing::info!("Searching conversations for: {}", query);
+
+    if query.trim().is_empty() {
+        return state
+            .services
+            .conversations
+            .get_conversations(limit, None)
+            .map_err(|e| format!("Failed to get conversations: {}", e));
+    }
+
+    state
+        .services
+        .conversations
+        .search_conversations(&query, limit)
+        .map_err(|e| format!("Failed to search conversations: {}", e))
+}
+
 #[tauri::command]
 pub async fn get_conversation(
     id: i64,
@@ -299,11 +323,7 @@ pub async fn get_database_stats(state: State<'_, AppState>) -> Result<DatabaseSt
     let personas_result = state.services.personas.get_personas();
 
     let total_conversations = match conversations_result {
-        Ok(_) => {
-            // This is a simplified count - in production, implement proper counting
-            // For now, we'll return a placeholder
-            0i64
-        }
+        Ok(conversations) => conversations.len() as i64,
         Err(_) => 0i64,
     };
 
@@ -312,11 +332,29 @@ pub async fn get_database_stats(state: State<'_, AppState>) -> Result<DatabaseSt
         Err(_) => 0i64,
     };
 
+    // Count total messages
+    let total_messages = {
+        let conn = state.db.connection().lock().unwrap();
+        conn.query_row("SELECT COUNT(*) FROM messages", [], |row| row.get::<_, i64>(0))
+            .unwrap_or(0)
+    };
+
+    // Calculate database size
+    let database_size_mb = {
+        let conn = state.db.connection().lock().unwrap();
+        let page_count: i64 = conn.query_row("PRAGMA page_count", [], |row| row.get(0))
+            .unwrap_or(0);
+        let page_size: i64 = conn.query_row("PRAGMA page_size", [], |row| row.get(0))
+            .unwrap_or(0);
+        let size_bytes = page_count * page_size;
+        (size_bytes as f64) / (1024.0 * 1024.0)
+    };
+
     Ok(DatabaseStats {
         total_conversations,
         total_personas,
-        total_messages: 0i64,  // Placeholder
-        database_size_mb: 0.0, // Placeholder
+        total_messages,
+        database_size_mb,
     })
 }
 
@@ -457,13 +495,27 @@ pub async fn export_conversation(
 #[tauri::command]
 pub async fn backup_database(
     backup_path: String,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<String, String> {
     tracing::info!("Creating database backup at: {}", backup_path);
 
-    // This would implement database backup functionality
-    // For now, return success message
-    Ok(format!("Database backed up to: {}", backup_path))
+    use std::fs;
+    use std::path::Path;
+
+    // Get the database file path
+    let db_path = state.db.path();
+
+    // Ensure backup directory exists
+    if let Some(parent) = Path::new(&backup_path).parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create backup directory: {}", e))?;
+    }
+
+    // Copy the database file
+    fs::copy(&db_path, &backup_path)
+        .map_err(|e| format!("Failed to backup database: {}", e))?;
+
+    Ok(format!("Database backed up successfully to: {}", backup_path))
 }
 
 #[tauri::command]
@@ -526,29 +578,76 @@ pub async fn get_system_info() -> Result<serde_json::Value, String> {
 /// Show native file dialog for opening files
 #[tauri::command]
 pub async fn show_open_dialog(
+    app_handle: tauri::AppHandle,
     title: Option<String>,
     default_path: Option<String>,
     filters: Option<Vec<(String, Vec<String>)>>,
 ) -> Result<Option<String>, String> {
     tracing::info!("Opening file dialog");
 
-    // This would use Tauri's dialog API
-    // For now, return a placeholder
-    Ok(Some("/path/to/selected/file.txt".to_string()))
+    use tauri::api::dialog::blocking::FileDialogBuilder;
+    use std::path::PathBuf;
+
+    let mut dialog = FileDialogBuilder::new();
+
+    if let Some(t) = title {
+        dialog = dialog.set_title(&t);
+    }
+
+    if let Some(path) = default_path {
+        dialog = dialog.set_directory(PathBuf::from(path));
+    }
+
+    if let Some(filter_list) = filters {
+        for (name, extensions) in filter_list {
+            let ext_refs: Vec<&str> = extensions.iter().map(|s| s.as_str()).collect();
+            dialog = dialog.add_filter(name, &ext_refs);
+        }
+    }
+
+    let result = dialog.pick_file();
+
+    Ok(result.map(|p| p.to_string_lossy().to_string()))
 }
 
 /// Show native file dialog for saving files
 #[tauri::command]
 pub async fn show_save_dialog(
+    app_handle: tauri::AppHandle,
     title: Option<String>,
     default_path: Option<String>,
     filters: Option<Vec<(String, Vec<String>)>>,
 ) -> Result<Option<String>, String> {
     tracing::info!("Opening save dialog");
 
-    // This would use Tauri's dialog API
-    // For now, return a placeholder
-    Ok(Some("/path/to/save/file.txt".to_string()))
+    use tauri::api::dialog::blocking::FileDialogBuilder;
+    use std::path::PathBuf;
+
+    let mut dialog = FileDialogBuilder::new();
+
+    if let Some(t) = title {
+        dialog = dialog.set_title(&t);
+    }
+
+    if let Some(path) = default_path {
+        if let Some(parent) = PathBuf::from(&path).parent() {
+            dialog = dialog.set_directory(parent);
+        }
+        if let Some(filename) = PathBuf::from(&path).file_name() {
+            dialog = dialog.set_file_name(filename.to_string_lossy().as_ref());
+        }
+    }
+
+    if let Some(filter_list) = filters {
+        for (name, extensions) in filter_list {
+            let ext_refs: Vec<&str> = extensions.iter().map(|s| s.as_str()).collect();
+            dialog = dialog.add_filter(name, &ext_refs);
+        }
+    }
+
+    let result = dialog.save_file();
+
+    Ok(result.map(|p| p.to_string_lossy().to_string()))
 }
 
 /// Write file to disk with native file system access

@@ -115,6 +115,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Conversation management commands
             commands::create_conversation,
             commands::get_conversations,
+            commands::search_conversations,
             commands::get_conversation,
             commands::delete_conversation,
             commands::archive_conversation,
