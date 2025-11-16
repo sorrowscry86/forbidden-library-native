@@ -9,7 +9,17 @@
 
   let errors: AppError[] = [];
   let timeouts = new Map<string, number>();
-  let errorPatterns: any = {};
+  let errorPatterns: {
+    cascadingFailures: boolean;
+    highErrorRate: boolean;
+    repeatedErrors: string[];
+    systemDegraded: boolean;
+  } = {
+    cascadingFailures: false,
+    highErrorRate: false,
+    repeatedErrors: [],
+    systemDegraded: false
+  };
   let systemHealth: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
   // Subscribe to enhanced error store

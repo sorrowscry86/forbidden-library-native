@@ -2,14 +2,16 @@
 	import { onMount } from 'svelte';
 	import { safeInvoke, isTauriAvailable } from '$lib/utils/enhanced-tauri-detection';
 	import { errorStore } from '$lib/stores/enhanced-error-store';
+	import { ErrorCategory, ErrorSeverity } from '$lib/types/errors';
+	import type { SystemInfo, WindowState, UpdateInfo } from '$lib/types/desktop';
 
-	let systemInfo: any = null;
+	let systemInfo: SystemInfo | null = null;
 	let isDesktop = false;
-	let windowState: any = null;
+	let windowState: WindowState | null = null;
 	let alwaysOnTop = false;
 	let isDarkMode = false;
 	let clipboardContent = '';
-	let updateInfo: any = null;
+	let updateInfo: UpdateInfo | null = null;
 	let loading = false;
 
 	onMount(async () => {
@@ -40,8 +42,8 @@
 			errorStore.addError({
 				message: 'Failed to load desktop information',
 				details: error instanceof Error ? error.message : String(error),
-				category: 'API' as any,
-				severity: 'WARNING' as any
+				category: ErrorCategory.API,
+				severity: ErrorSeverity.WARNING
 			});
 		} finally {
 			loading = false;
