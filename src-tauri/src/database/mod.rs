@@ -202,6 +202,15 @@ impl DatabaseManager {
 
         // Apply encryption if configured
         if !self.config.encryption_key.is_empty() {
+            // Validate encryption key to prevent SQL injection
+            // Keys should only contain alphanumeric characters, hyphens, and underscores
+            if !self.config.encryption_key.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+                return Err(AppError::validation(
+                    "Encryption key contains invalid characters. Only alphanumeric, hyphens, and underscores allowed."
+                ));
+            }
+
+            // Safe to use in SQL now that we've validated the key format
             let encryption_cmd = format!("PRAGMA key = '{}';", self.config.encryption_key);
             conn.execute_batch(&encryption_cmd).map_err(|e| {
                 AppError::encryption(format!("Failed to set encryption key: {}", e))
