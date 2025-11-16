@@ -317,12 +317,10 @@ async fn test_memory_exhaustion_prevention() {
 
     // Create many conversations to test memory limits
     for i in 0..1000 {
-        let result = create_conversation(
+        let result = env.services.conversations.create_conversation(
             format!("Memory Test {}", i),
             None,
-            State::new(&env.app_state),
-        )
-        .await;
+        );
 
         assert!(result.is_ok(), "Failed to create conversation {}", i);
     }
@@ -444,7 +442,6 @@ async fn test_service_isolation() {
         .services
         .conversations
         .create_conversation("Isolation Test 1".to_string(), None)
-        .await
         .unwrap();
 
     let conv2 = env
