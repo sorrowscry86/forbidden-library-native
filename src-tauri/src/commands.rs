@@ -95,10 +95,16 @@ pub async fn create_conversation(
         title,
         persona_id
     );
+
+    // Validate conversation title
+    let validator = InputValidator::default();
+    let validated_title = validator.validate_conversation_title(&title)
+        .map_err(|e| format!("Invalid conversation title: {}", e))?;
+
     state
         .services
         .conversations
-        .create_conversation(title, persona_id)
+        .create_conversation(validated_title, persona_id)
         .map_err(|e| format!("Failed to create conversation: {}", e))
 }
 
@@ -202,6 +208,11 @@ pub async fn add_message(
         content.len()
     );
 
+    // Validate message content
+    let validator = InputValidator::default();
+    let validated_content = validator.validate_message_content(&content)
+        .map_err(|e| format!("Invalid message content: {}", e))?;
+
     let message_role = match role.as_str() {
         "user" => MessageRole::User,
         "assistant" => MessageRole::Assistant,
@@ -215,7 +226,7 @@ pub async fn add_message(
         .add_message(
             conversation_id,
             message_role,
-            content,
+            validated_content,
             tokens_used,
             model_used,
         )
@@ -245,10 +256,18 @@ pub async fn create_persona(
     state: State<'_, AppState>,
 ) -> Result<Persona, String> {
     tracing::info!("Creating persona: {}", name);
+
+    // Validate persona name and prompt
+    let validator = InputValidator::default();
+    let validated_name = validator.validate_persona_name(&name)
+        .map_err(|e| format!("Invalid persona name: {}", e))?;
+    let validated_prompt = validator.validate_system_prompt(&system_prompt)
+        .map_err(|e| format!("Invalid system prompt: {}", e))?;
+
     state
         .services
         .personas
-        .create_persona(name, description, system_prompt)
+        .create_persona(validated_name, description, validated_prompt)
         .map_err(|e| format!("Failed to create persona: {}", e))
 }
 
@@ -308,10 +327,24 @@ pub async fn store_api_config(
     state: State<'_, AppState>,
 ) -> Result<(), String> {
     tracing::info!("Storing API config for provider: {}", provider);
+
+    // Validate API key
+    let validator = InputValidator::default();
+    let validated_api_key = validator.validate_api_key(&api_key)
+        .map_err(|e| format!("Invalid API key: {}", e))?;
+
+    // Validate base URL if provided
+    let validated_base_url = if let Some(url) = base_url {
+        Some(validator.validate_url(&url)
+            .map_err(|e| format!("Invalid base URL: {}", e))?)
+    } else {
+        None
+    };
+
     state
         .services
         .apis
-        .store_api_config(provider, api_key, base_url)
+        .store_api_config(provider, validated_api_key, validated_base_url)
         .map_err(|e| format!("Failed to store API config: {}", e))
 }
 
