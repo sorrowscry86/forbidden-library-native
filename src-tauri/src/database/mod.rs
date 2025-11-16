@@ -202,6 +202,15 @@ impl DatabaseManager {
 
         // Apply encryption if configured
         if !self.config.encryption_key.is_empty() {
+            // Validate encryption key to prevent SQL injection
+            // Keys should only contain alphanumeric characters, hyphens, and underscores
+            if !self.config.encryption_key.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+                return Err(AppError::validation(
+                    "Encryption key contains invalid characters. Only alphanumeric, hyphens, and underscores allowed."
+                ));
+            }
+
+            // Safe to use in SQL now that we've validated the key format
             let encryption_cmd = format!("PRAGMA key = '{}';", self.config.encryption_key);
             conn.execute_batch(&encryption_cmd).map_err(|e| {
                 AppError::encryption(format!("Failed to set encryption key: {}", e))
@@ -351,15 +360,9 @@ impl DatabaseManager {
         Ok(())
     }
 
-    /// Legacy method for backward compatibility - DO NOT USE IN NEW CODE
-    /// This method is deprecated and only exists for compatibility with existing services
-    /// Use get_connection() instead
-    pub fn connection(&self) -> std::sync::MutexGuard<'_, Connection> {
-        // For now, create a temporary connection for backward compatibility
-        // This is not ideal but allows gradual migration
-        // TODO: Update all services to use get_connection() directly
-        panic!("Backward compatibility not implemented yet - use get_connection() instead")
-    }
+    // REMOVED: Legacy connection() method that was causing panics
+    // All services have been migrated to use get_connection() instead
+    // If you need a connection, use: let conn = db_manager.get_connection()?;
 
     /// Optimize database (VACUUM, ANALYZE)
     pub fn optimize(&self) -> AppResult<()> {
