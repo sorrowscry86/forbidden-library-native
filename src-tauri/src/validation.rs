@@ -6,6 +6,45 @@
 use crate::errors::{AppError, AppResult};
 use regex::Regex;
 use std::collections::HashSet;
+use std::sync::OnceLock;
+
+/// Cached regex patterns for performance optimization
+/// These are compiled once at first use and reused throughout the application
+static PERSONA_NAME_REGEX: OnceLock<Regex> = OnceLock::new();
+static API_KEY_REGEX: OnceLock<Regex> = OnceLock::new();
+static URL_REGEX: OnceLock<Regex> = OnceLock::new();
+static EMAIL_REGEX: OnceLock<Regex> = OnceLock::new();
+static UUID_REGEX: OnceLock<Regex> = OnceLock::new();
+
+/// Get or initialize the persona name regex pattern
+fn get_persona_name_regex() -> &'static Regex {
+    PERSONA_NAME_REGEX.get_or_init(|| Regex::new(r"^[a-zA-Z0-9\s\-_]+$").unwrap())
+}
+
+/// Get or initialize the API key regex pattern
+fn get_api_key_regex() -> &'static Regex {
+    API_KEY_REGEX.get_or_init(|| Regex::new(r"^[a-zA-Z0-9\-_.]+$").unwrap())
+}
+
+/// Get or initialize the URL regex pattern
+fn get_url_regex() -> &'static Regex {
+    URL_REGEX.get_or_init(|| Regex::new(r"^https?://[^\s/$.?#].[^\s]*$").unwrap())
+}
+
+/// Get or initialize the email regex pattern
+fn get_email_regex() -> &'static Regex {
+    EMAIL_REGEX.get_or_init(|| {
+        Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap()
+    })
+}
+
+/// Get or initialize the UUID regex pattern
+fn get_uuid_regex() -> &'static Regex {
+    UUID_REGEX.get_or_init(|| {
+        Regex::new(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+            .unwrap()
+    })
+}
 
 /// Comprehensive input validator for the Forbidden Library application
 /// Validates all user inputs according to VoidCat RDC security standards
@@ -150,8 +189,7 @@ impl InputValidator {
         }
 
         // Persona names should be alphanumeric with spaces, hyphens, and underscores
-        let valid_regex = Regex::new(r"^[a-zA-Z0-9\s\-_]+$").unwrap();
-        if !valid_regex.is_match(trimmed) {
+        if !get_persona_name_regex().is_match(trimmed) {
             return Err(AppError::validation(
                 "Persona name can only contain letters, numbers, spaces, hyphens, and underscores",
             ));
@@ -215,8 +253,7 @@ impl InputValidator {
         }
 
         // API keys should be alphanumeric with some special characters
-        let valid_regex = Regex::new(r"^[a-zA-Z0-9\-_.]+$").unwrap();
-        if !valid_regex.is_match(trimmed) {
+        if !get_api_key_regex().is_match(trimmed) {
             return Err(AppError::validation("API key contains invalid characters"));
         }
 
@@ -277,8 +314,7 @@ impl InputValidator {
         }
 
         // Basic URL validation
-        let url_regex = Regex::new(r"^https?://[^\s/$.?#].[^\s]*$").unwrap();
-        if !url_regex.is_match(trimmed) {
+        if !get_url_regex().is_match(trimmed) {
             return Err(AppError::validation("Invalid URL format"));
         }
 
@@ -293,8 +329,7 @@ impl InputValidator {
             return Err(AppError::validation("Email cannot be empty"));
         }
 
-        let email_regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
-        if !email_regex.is_match(trimmed) {
+        if !get_email_regex().is_match(trimmed) {
             return Err(AppError::validation("Invalid email format"));
         }
 
@@ -309,11 +344,7 @@ impl InputValidator {
             return Err(AppError::validation("UUID cannot be empty"));
         }
 
-        let uuid_regex = Regex::new(
-            r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-        )
-        .unwrap();
-        if !uuid_regex.is_match(trimmed) {
+        if !get_uuid_regex().is_match(trimmed) {
             return Err(AppError::validation("Invalid UUID format"));
         }
 
