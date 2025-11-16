@@ -384,10 +384,12 @@ impl InputValidator {
         Ok(trimmed)
     }
 
-    /// Check for dangerous characters that could be used for injection attacks
+    /// Check for XSS patterns that could be dangerous when rendered
+    /// Note: SQL injection is prevented by parameterized queries, not input filtering
     fn contains_dangerous_chars(&self, input: &str) -> bool {
-        // Look for SQL injection patterns, script tags, etc.
-        let dangerous_patterns = [
+        // Only check for XSS patterns - not SQL injection (handled by parameterized queries)
+        // This allows legitimate input like "O'Brien", quotes in messages, etc.
+        let xss_patterns = [
             "<script",
             "</script>",
             "javascript:",
@@ -396,21 +398,16 @@ impl InputValidator {
             "onerror=",
             "onclick=",
             "onmouseover=",
-            "DROP TABLE",
-            "INSERT INTO",
-            "DELETE FROM",
-            "UPDATE SET",
-            "UNION SELECT",
-            "'",
-            "\"",
-            ";",
-            "--",
-            "/*",
-            "*/",
+            "onmouseout=",
+            "onfocus=",
+            "onblur=",
+            "<iframe",
+            "</iframe>",
+            "data:text/html",
         ];
 
         let input_lower = input.to_lowercase();
-        dangerous_patterns
+        xss_patterns
             .iter()
             .any(|pattern| input_lower.contains(pattern))
     }
@@ -527,9 +524,19 @@ mod tests {
     fn test_dangerous_chars_detection() {
         let validator = InputValidator::default();
 
+        // XSS patterns should be detected
         assert!(validator.contains_dangerous_chars("<script>alert('xss')</script>"));
-        assert!(validator.contains_dangerous_chars("'; DROP TABLE users; --"));
         assert!(validator.contains_dangerous_chars("onclick=malicious()"));
+        assert!(validator.contains_dangerous_chars("<iframe src='evil.com'></iframe>"));
+        assert!(validator.contains_dangerous_chars("javascript:alert('xss')"));
+
+        // Safe content should pass
         assert!(!validator.contains_dangerous_chars("Safe content here"));
+
+        // SQL-like patterns should now be ALLOWED (handled by parameterized queries)
+        assert!(!validator.contains_dangerous_chars("O'Brien's conversation"));
+        assert!(!validator.contains_dangerous_chars("Project: Phase 1; Phase 2"));
+        assert!(!validator.contains_dangerous_chars("She said \"hello\" to me"));
+        assert!(!validator.contains_dangerous_chars("SQL comment: -- this is fine"));
     }
 }
