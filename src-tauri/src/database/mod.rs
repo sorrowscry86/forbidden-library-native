@@ -357,6 +357,52 @@ impl DatabaseManager {
             [],
         )?;
 
+        // Additional performance indexes for common queries
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_conversations_updated ON conversations(updated_at DESC);",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_conversations_archived ON conversations(archived);",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_personas_active ON personas(active);",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_grimoire_updated ON grimoire_entries(updated_at DESC);",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_grimoire_accessed ON grimoire_entries(accessed_count DESC);",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_api_configs_active ON api_configs(active);",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_api_configs_provider ON api_configs(provider);",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_projects_updated ON projects(updated_at DESC);",
+            [],
+        )?;
+
         Ok(())
     }
 
