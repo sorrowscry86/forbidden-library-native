@@ -235,7 +235,22 @@ impl DatabaseManager {
     fn initialize_schema(&self) -> AppResult<()> {
         let conn = self.get_connection()?;
 
-        // Conversations table - Core chat functionality
+        // Create all tables
+        Self::create_conversations_table(&conn)?;
+        Self::create_messages_table(&conn)?;
+        Self::create_personas_table(&conn)?;
+        Self::create_grimoire_table(&conn)?;
+        Self::create_api_configs_table(&conn)?;
+        Self::create_projects_table(&conn)?;
+
+        // Create all indices
+        Self::create_performance_indices(&conn)?;
+
+        Ok(())
+    }
+
+    /// Create conversations table
+    fn create_conversations_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS conversations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -250,8 +265,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Messages table - Individual conversation messages
+    /// Create messages table
+    fn create_messages_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS messages (
                 id TEXT PRIMARY KEY,
@@ -266,8 +284,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Personas table - Character profiles and behavior
+    /// Create personas table
+    fn create_personas_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS personas (
                 id TEXT PRIMARY KEY,
@@ -282,8 +303,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Grimoire entries - Knowledge base system
+    /// Create grimoire entries table
+    fn create_grimoire_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS grimoire_entries (
                 id TEXT PRIMARY KEY,
@@ -299,8 +323,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // API configurations - External service management
+    /// Create API configurations table
+    fn create_api_configs_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS api_configs (
                 id TEXT PRIMARY KEY,
@@ -315,8 +342,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Projects table - Development project tracking
+    /// Create projects table
+    fn create_projects_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS projects (
                 id TEXT PRIMARY KEY,
@@ -330,32 +360,22 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Create indices for performance
-        conn.execute(
+    /// Create performance indices for all tables
+    fn create_performance_indices(conn: &Connection) -> AppResult<()> {
+        let indices = [
             "CREATE INDEX IF NOT EXISTS idx_conversations_persona ON conversations(persona_id);",
-            [],
-        )?;
-
-        conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);",
-            [],
-        )?;
-
-        conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);",
-            [],
-        )?;
-
-        conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_grimoire_category ON grimoire_entries(category);",
-            [],
-        )?;
-
-        conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_grimoire_tags ON grimoire_entries(tags);",
-            [],
-        )?;
+        ];
+
+        for index_sql in &indices {
+            conn.execute(index_sql, [])?;
+        }
 
         Ok(())
     }

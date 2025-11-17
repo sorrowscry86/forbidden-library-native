@@ -498,9 +498,22 @@ impl InputValidator {
     }
 
     /// Check for dangerous characters that could be used for injection attacks
+    ///
+    /// Categorizes dangerous patterns for better maintainability:
+    /// - XSS patterns (script tags, event handlers)
+    /// - SQL injection patterns (SQL keywords, comment markers)
+    /// - Special characters that could be misused
     fn contains_dangerous_chars(&self, input: &str) -> bool {
-        // Look for SQL injection patterns, script tags, etc.
-        let dangerous_patterns = [
+        let input_lower = input.to_lowercase();
+
+        Self::contains_xss_patterns(&input_lower)
+            || Self::contains_sql_injection_patterns(&input_lower)
+            || Self::contains_dangerous_special_chars(&input_lower)
+    }
+
+    /// Check for XSS (Cross-Site Scripting) attack patterns
+    fn contains_xss_patterns(input_lower: &str) -> bool {
+        const XSS_PATTERNS: &[&str] = &[
             "<script",
             "</script>",
             "javascript:",
@@ -509,11 +522,27 @@ impl InputValidator {
             "onerror=",
             "onclick=",
             "onmouseover=",
-            "DROP TABLE",
-            "INSERT INTO",
-            "DELETE FROM",
-            "UPDATE SET",
-            "UNION SELECT",
+        ];
+
+        XSS_PATTERNS.iter().any(|pattern| input_lower.contains(pattern))
+    }
+
+    /// Check for SQL injection attack patterns
+    fn contains_sql_injection_patterns(input_lower: &str) -> bool {
+        const SQL_PATTERNS: &[&str] = &[
+            "drop table",
+            "insert into",
+            "delete from",
+            "update set",
+            "union select",
+        ];
+
+        SQL_PATTERNS.iter().any(|pattern| input_lower.contains(pattern))
+    }
+
+    /// Check for dangerous special characters
+    fn contains_dangerous_special_chars(input_lower: &str) -> bool {
+        const DANGEROUS_CHARS: &[&str] = &[
             "'",
             "\"",
             ";",
@@ -522,10 +551,7 @@ impl InputValidator {
             "*/",
         ];
 
-        let input_lower = input.to_lowercase();
-        dangerous_patterns
-            .iter()
-            .any(|pattern| input_lower.contains(pattern))
+        DANGEROUS_CHARS.iter().any(|pattern| input_lower.contains(pattern))
     }
 
     /// Validate and sanitize JSON string

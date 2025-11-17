@@ -17,31 +17,51 @@ pub struct AppState {
 }
 
 /// Validate and sanitize file paths to prevent path traversal attacks
-/// This provides a basic security check - paths should still be scoped via Tauri's allowlist
+///
+/// This provides a basic security check - paths should still be scoped via Tauri's allowlist.
+/// Performs two-stage validation:
+/// 1. Standard path validation (extension, traversal prevention)
+/// 2. System directory protection (blocks access to sensitive OS directories)
 fn validate_file_path_secure(path: &str) -> Result<String, String> {
-    use std::path::Path;
-
-    // Basic validation using the InputValidator
+    // Stage 1: Basic validation
     let validator = InputValidator::default();
     let validated = validator.validate_file_path(path)
         .map_err(|e| format!("Invalid file path: {}", e))?;
 
-    // Additional check: prevent absolute paths to system directories
-    let path_obj = Path::new(&validated);
-
-    // Reject absolute paths to sensitive directories
-    if path_obj.is_absolute() {
-        let path_str = validated.to_lowercase();
-        if path_str.starts_with("/etc") ||
-           path_str.starts_with("/sys") ||
-           path_str.starts_with("/proc") ||
-           path_str.starts_with("c:\\windows") ||
-           path_str.starts_with("c:\\program files") {
-            return Err("Access to system directories is not allowed".to_string());
-        }
-    }
+    // Stage 2: System directory check
+    check_system_directory_access(&validated)?;
 
     Ok(validated)
+}
+
+/// Check if the path attempts to access protected system directories
+///
+/// Blocks absolute paths to sensitive OS directories on Unix and Windows.
+fn check_system_directory_access(path: &str) -> Result<(), String> {
+    use std::path::Path;
+
+    let path_obj = Path::new(path);
+    if !path_obj.is_absolute() {
+        return Ok(()); // Relative paths are allowed
+    }
+
+    let path_lower = path.to_lowercase();
+
+    // Unix system directories
+    const UNIX_PROTECTED_DIRS: &[&str] = &["/etc", "/sys", "/proc"];
+
+    // Windows system directories
+    const WINDOWS_PROTECTED_DIRS: &[&str] = &["c:\\windows", "c:\\program files"];
+
+    let is_protected = UNIX_PROTECTED_DIRS.iter()
+        .chain(WINDOWS_PROTECTED_DIRS.iter())
+        .any(|protected_dir| path_lower.starts_with(protected_dir));
+
+    if is_protected {
+        return Err("Access to system directories is not allowed".to_string());
+    }
+
+    Ok(())
 }
 
 #[derive(Debug, Serialize, Deserialize)]
