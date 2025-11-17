@@ -8,6 +8,30 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Core conversation model - Enhanced for native application
+///
+/// Represents a single conversation thread between the user and an AI assistant.
+/// Each conversation can be associated with a specific persona for customized interactions.
+///
+/// # Fields
+///
+/// * `id` - Optional database identifier (None for new conversations)
+/// * `uuid` - Universally unique identifier for cross-platform synchronization
+/// * `title` - User-facing title of the conversation
+/// * `persona_id` - Optional reference to the persona used in this conversation
+/// * `created_at` - Timestamp when the conversation was created
+/// * `updated_at` - Timestamp of the last modification
+/// * `archived` - Whether the conversation is archived (hidden from main view)
+/// * `metadata` - Optional extended metadata for analytics and tracking
+///
+/// # Examples
+///
+/// ```
+/// use forbidden_library_native::models::Conversation;
+///
+/// let conversation = Conversation::new("My First Chat".to_string(), None);
+/// assert_eq!(conversation.title, "My First Chat");
+/// assert!(!conversation.archived);
+/// ```
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Conversation {
     pub id: Option<i64>,
@@ -46,6 +70,30 @@ impl Default for ConversationPriority {
 }
 
 /// Individual message within a conversation - Enhanced for native application
+///
+/// Represents a single message in a conversation thread. Messages can be from
+/// the user, the AI assistant, or the system (for prompts and context).
+///
+/// # Fields
+///
+/// * `id` - Optional database identifier
+/// * `conversation_id` - Foreign key reference to the parent conversation
+/// * `role` - Who sent the message (User, Assistant, or System)
+/// * `content` - The actual message text
+/// * `metadata` - Optional extended metadata for tracking and analytics
+/// * `created_at` - Timestamp when the message was created
+/// * `tokens_used` - Number of tokens consumed by this message (for cost tracking)
+/// * `model_used` - AI model that generated this response (for assistant messages)
+///
+/// # Examples
+///
+/// ```
+/// use forbidden_library_native::models::{Message, MessageRole};
+///
+/// let message = Message::new(1, MessageRole::User, "Hello!".to_string());
+/// assert_eq!(message.conversation_id, 1);
+/// assert_eq!(message.role, MessageRole::User);
+/// ```
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Message {
     pub id: Option<i64>,
@@ -58,6 +106,16 @@ pub struct Message {
     pub model_used: Option<String>,
 }
 
+/// Role of the message sender in a conversation
+///
+/// Determines who created the message and how it should be processed
+/// and displayed in the UI.
+///
+/// # Variants
+///
+/// * `User` - Message from the human user
+/// * `Assistant` - Response from the AI assistant
+/// * `System` - System-generated message (prompts, context, instructions)
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum MessageRole {
@@ -86,6 +144,37 @@ pub struct MessageAttachment {
 }
 
 /// Persona model - Enhanced AI character definitions
+///
+/// Represents a customizable AI character with specific behavior, personality,
+/// and settings. Personas allow users to create specialized assistants for
+/// different tasks and contexts.
+///
+/// # Fields
+///
+/// * `id` - Optional database identifier
+/// * `name` - Display name of the persona
+/// * `description` - Optional human-readable description of the persona's purpose
+/// * `system_prompt` - The core instruction that defines the persona's behavior
+/// * `avatar_path` - Optional file path to the persona's avatar image
+/// * `memory_context` - Optional JSON object for persona memory and context
+/// * `settings` - Optional persona-specific settings (temperature, model, etc.)
+/// * `created_at` - Timestamp when the persona was created
+/// * `updated_at` - Timestamp of the last modification
+/// * `active` - Whether this persona is currently active and usable
+///
+/// # Examples
+///
+/// ```
+/// use forbidden_library_native::models::Persona;
+///
+/// let persona = Persona::new(
+///     "Coding Assistant".to_string(),
+///     Some("Helps with programming tasks".to_string()),
+///     "You are an expert software engineer.".to_string()
+/// );
+/// assert_eq!(persona.name, "Coding Assistant");
+/// assert!(persona.active);
+/// ```
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Persona {
     pub id: Option<i64>,
@@ -295,6 +384,32 @@ pub struct RepositoryStats {
 
 // Utility implementations for model creation
 impl Conversation {
+    /// Create a new conversation with the given title and optional persona
+    ///
+    /// Initializes a new conversation with generated UUID, current timestamps,
+    /// and default values for archived status and metadata.
+    ///
+    /// # Arguments
+    ///
+    /// * `title` - The display title for the conversation
+    /// * `persona_id` - Optional persona to associate with this conversation
+    ///
+    /// # Returns
+    ///
+    /// A new `Conversation` instance ready to be saved to the database
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use forbidden_library_native::models::Conversation;
+    ///
+    /// // Create conversation without persona
+    /// let conv1 = Conversation::new("General Chat".to_string(), None);
+    ///
+    /// // Create conversation with persona
+    /// let conv2 = Conversation::new("Coding Help".to_string(), Some(5));
+    /// assert_eq!(conv2.persona_id, Some(5));
+    /// ```
     pub fn new(title: String, persona_id: Option<i64>) -> Self {
         let now = Utc::now();
         Self {
@@ -311,6 +426,38 @@ impl Conversation {
 }
 
 impl Message {
+    /// Create a new message for a conversation
+    ///
+    /// Initializes a new message with the current timestamp and default values
+    /// for optional fields like metadata, tokens, and model.
+    ///
+    /// # Arguments
+    ///
+    /// * `conversation_id` - ID of the parent conversation
+    /// * `role` - Who is sending this message (User, Assistant, or System)
+    /// * `content` - The message text content
+    ///
+    /// # Returns
+    ///
+    /// A new `Message` instance ready to be saved to the database
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use forbidden_library_native::models::{Message, MessageRole};
+    ///
+    /// let user_msg = Message::new(
+    ///     1,
+    ///     MessageRole::User,
+    ///     "What is Rust?".to_string()
+    /// );
+    ///
+    /// let assistant_msg = Message::new(
+    ///     1,
+    ///     MessageRole::Assistant,
+    ///     "Rust is a systems programming language.".to_string()
+    /// );
+    /// ```
     pub fn new(conversation_id: i64, role: MessageRole, content: String) -> Self {
         Self {
             id: None,
@@ -326,6 +473,34 @@ impl Message {
 }
 
 impl Persona {
+    /// Create a new persona with the given name, description, and system prompt
+    ///
+    /// Initializes a new persona with current timestamps and default active status.
+    /// The system prompt defines the persona's behavior and personality.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The display name for the persona
+    /// * `description` - Optional human-readable description of the persona's purpose
+    /// * `system_prompt` - The core instruction that defines the persona's behavior
+    ///
+    /// # Returns
+    ///
+    /// A new `Persona` instance ready to be saved to the database
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use forbidden_library_native::models::Persona;
+    ///
+    /// let coding_assistant = Persona::new(
+    ///     "Code Helper".to_string(),
+    ///     Some("Assists with programming and debugging".to_string()),
+    ///     "You are an expert software engineer specializing in Rust.".to_string()
+    /// );
+    /// assert_eq!(coding_assistant.name, "Code Helper");
+    /// assert!(coding_assistant.active);
+    /// ```
     pub fn new(name: String, description: Option<String>, system_prompt: String) -> Self {
         let now = Utc::now();
         Self {

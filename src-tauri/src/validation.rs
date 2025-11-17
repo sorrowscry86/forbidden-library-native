@@ -8,7 +8,33 @@ use regex::Regex;
 use std::collections::HashSet;
 
 /// Comprehensive input validator for the Forbidden Library application
-/// Validates all user inputs according to VoidCat RDC security standards
+///
+/// Provides centralized validation for all user inputs to ensure data integrity
+/// and security. Validates strings, file paths, URLs, and other inputs according
+/// to security best practices.
+///
+/// # Features
+///
+/// * Length validation for all string inputs
+/// * Format validation (email, URL, UUID, etc.)
+/// * Security validation (SQL injection, XSS prevention)
+/// * File path security (path traversal prevention)
+/// * Whitelisted file extensions
+///
+/// # Examples
+///
+/// ```
+/// use forbidden_library_native::validation::InputValidator;
+///
+/// let validator = InputValidator::default();
+///
+/// // Validate conversation title
+/// let title = validator.validate_conversation_title("My Chat").unwrap();
+/// assert_eq!(title, "My Chat");
+///
+/// // Validate URL
+/// let url = validator.validate_url("https://example.com").unwrap();
+/// ```
 pub struct InputValidator {
     /// Allowed file extensions for file operations
     allowed_extensions: HashSet<String>,
@@ -87,7 +113,43 @@ impl InputValidator {
         }
     }
 
-    /// Validate conversation title
+    /// Validate and sanitize a conversation title
+    ///
+    /// Ensures the title is not empty, within length limits, and doesn't contain
+    /// potentially dangerous characters.
+    ///
+    /// # Arguments
+    ///
+    /// * `title` - The conversation title to validate
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` - The trimmed and validated title
+    /// * `Err(AppError::Validation)` - If validation fails
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// * Title is empty or whitespace only
+    /// * Title exceeds maximum length (200 characters)
+    /// * Title contains dangerous characters (SQL injection, XSS patterns)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use forbidden_library_native::validation::InputValidator;
+    ///
+    /// let validator = InputValidator::default();
+    ///
+    /// // Valid title
+    /// assert!(validator.validate_conversation_title("My Chat").is_ok());
+    ///
+    /// // Invalid - empty
+    /// assert!(validator.validate_conversation_title("").is_err());
+    ///
+    /// // Invalid - XSS attempt
+    /// assert!(validator.validate_conversation_title("<script>alert('xss')</script>").is_err());
+    /// ```
     pub fn validate_conversation_title(&self, title: &str) -> AppResult<String> {
         let trimmed = title.trim();
 
@@ -223,7 +285,51 @@ impl InputValidator {
         Ok(trimmed.to_string())
     }
 
-    /// Validate file path and extension
+    /// Validate file path and extension for security
+    ///
+    /// Ensures the file path has a valid whitelisted extension and doesn't contain
+    /// path traversal sequences that could access unauthorized directories.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The file path to validate
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` - The validated file path
+    /// * `Err(AppError::Validation)` - If validation fails
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// * Path is empty
+    /// * Path exceeds maximum length (1000 characters)
+    /// * File extension is not in the whitelist
+    /// * Path contains traversal sequences (`..`, `~`)
+    ///
+    /// # Security
+    ///
+    /// This method prevents path traversal attacks by rejecting paths containing
+    /// `..` or `~` sequences. Only whitelisted file extensions are allowed to
+    /// prevent execution of arbitrary files.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use forbidden_library_native::validation::InputValidator;
+    ///
+    /// let validator = InputValidator::default();
+    ///
+    /// // Valid paths
+    /// assert!(validator.validate_file_path("document.txt").is_ok());
+    /// assert!(validator.validate_file_path("folder/file.md").is_ok());
+    ///
+    /// // Invalid - path traversal
+    /// assert!(validator.validate_file_path("../../../etc/passwd").is_err());
+    ///
+    /// // Invalid - dangerous extension
+    /// assert!(validator.validate_file_path("malware.exe").is_err());
+    /// ```
     pub fn validate_file_path(&self, path: &str) -> AppResult<String> {
         let trimmed = path.trim();
 
@@ -261,7 +367,45 @@ impl InputValidator {
         Ok(trimmed.to_string())
     }
 
-    /// Validate URL format
+    /// Validate URL format and protocol
+    ///
+    /// Ensures the URL has a valid HTTP or HTTPS scheme and proper format.
+    /// Only allows http:// and https:// protocols for security.
+    ///
+    /// # Arguments
+    ///
+    /// * `url` - The URL string to validate
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` - The validated URL
+    /// * `Err(AppError::Validation)` - If validation fails
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// * URL is empty
+    /// * URL exceeds maximum length (2000 characters)
+    /// * URL doesn't match HTTP/HTTPS format
+    /// * URL contains invalid characters
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use forbidden_library_native::validation::InputValidator;
+    ///
+    /// let validator = InputValidator::default();
+    ///
+    /// // Valid URLs
+    /// assert!(validator.validate_url("https://example.com").is_ok());
+    /// assert!(validator.validate_url("http://localhost:3000/api").is_ok());
+    ///
+    /// // Invalid - wrong protocol
+    /// assert!(validator.validate_url("ftp://example.com").is_err());
+    ///
+    /// // Invalid - not a URL
+    /// assert!(validator.validate_url("not-a-url").is_err());
+    /// ```
     pub fn validate_url(&self, url: &str) -> AppResult<String> {
         let trimmed = url.trim();
 

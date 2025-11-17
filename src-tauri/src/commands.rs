@@ -53,6 +53,26 @@ pub struct AppInfo {
 // ==================== BASIC APPLICATION COMMANDS ====================
 
 /// Simple greeting command for testing IPC communication
+///
+/// A basic command used to verify that the Tauri IPC bridge between
+/// frontend and backend is working correctly.
+///
+/// # Arguments
+///
+/// * `name` - The name to include in the greeting
+///
+/// # Returns
+///
+/// * `Ok(String)` - A personalized greeting message
+/// * `Err(String)` - Should never error, included for Tauri compatibility
+///
+/// # Examples
+///
+/// ```
+/// // Called from frontend JavaScript:
+/// // const greeting = await invoke('greet', { name: 'Alice' });
+/// // Returns: "Hello, Alice! Welcome to the Forbidden Library."
+/// ```
 #[tauri::command]
 pub async fn greet(name: &str) -> Result<String, String> {
     tracing::info!("Greeting request for: {}", name);
@@ -84,6 +104,38 @@ pub async fn initialize_database() -> Result<String, String> {
 
 // ==================== CONVERSATION COMMANDS ====================
 
+/// Create a new conversation with optional persona
+///
+/// Creates a new conversation thread in the database. The conversation can be
+/// associated with a specific persona to customize the AI's behavior.
+///
+/// # Arguments
+///
+/// * `title` - The display title for the conversation
+/// * `persona_id` - Optional ID of the persona to use for this conversation
+/// * `state` - Tauri application state containing services
+///
+/// # Returns
+///
+/// * `Ok(Conversation)` - The newly created conversation with generated ID
+/// * `Err(String)` - Error message if creation fails or validation fails
+///
+/// # Validation
+///
+/// The title is validated to ensure it:
+/// * Is not empty
+/// * Doesn't exceed 200 characters
+/// * Doesn't contain dangerous characters (XSS, SQL injection patterns)
+///
+/// # Examples
+///
+/// ```
+/// // Called from frontend JavaScript:
+/// // const conv = await invoke('create_conversation', {
+/// //   title: 'My Chat',
+/// //   personaId: null
+/// // });
+/// ```
 #[tauri::command]
 pub async fn create_conversation(
     title: String,
