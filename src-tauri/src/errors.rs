@@ -34,6 +34,10 @@ pub enum AppError {
     #[error("Encryption error: {message}")]
     Encryption { message: String },
 
+    /// Keychain/credential storage errors (OS keychain access)
+    #[error("Keychain error: {message}")]
+    Keychain { message: String },
+
     /// Unexpected errors (system failures, unhandled cases)
     #[error("Unexpected error: {message}")]
     Unexpected { message: String },
@@ -118,6 +122,13 @@ impl AppError {
         }
     }
 
+    /// Create a keychain error with a custom message
+    pub fn keychain(message: impl Into<String>) -> Self {
+        AppError::Keychain {
+            message: message.into(),
+        }
+    }
+
     /// Create an I/O error with a custom message
     pub fn io(message: impl Into<String>) -> Self {
         AppError::Io {
@@ -136,7 +147,7 @@ impl AppError {
     pub fn is_critical(&self) -> bool {
         matches!(
             self,
-            AppError::Database { .. } | AppError::Encryption { .. } | AppError::Unexpected { .. }
+            AppError::Database { .. } | AppError::Encryption { .. } | AppError::Keychain { .. } | AppError::Unexpected { .. }
         )
     }
 
@@ -158,6 +169,9 @@ impl AppError {
             AppError::Encryption { .. } => {
                 "A security error occurred. Please restart the application.".to_string()
             }
+            AppError::Keychain { .. } => {
+                "Failed to access secure credential storage. Please check your system keychain.".to_string()
+            }
             AppError::Unexpected { .. } => {
                 "An unexpected error occurred. Please try again or contact support.".to_string()
             }
@@ -173,6 +187,7 @@ impl AppError {
             AppError::NotFound { message } => format!("Not found: {}", message),
             AppError::Api { message } => format!("API error: {}", message),
             AppError::Encryption { message } => format!("Encryption error: {}", message),
+            AppError::Keychain { message } => format!("Keychain error: {}", message),
             AppError::Unexpected { message } => format!("Unexpected error: {}", message),
         }
     }

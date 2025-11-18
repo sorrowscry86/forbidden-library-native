@@ -58,6 +58,9 @@ regex = { workspace = true }
 # Cross-platform paths and directories
 dirs = { workspace = true }
 
+# Secure credential storage (OS keychain integration)
+keyring = "3.6"
+
 
 
 [dev-dependencies]

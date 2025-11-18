@@ -235,7 +235,22 @@ impl DatabaseManager {
     fn initialize_schema(&self) -> AppResult<()> {
         let conn = self.get_connection()?;
 
-        // Conversations table - Core chat functionality
+        // Create all tables
+        Self::create_conversations_table(&conn)?;
+        Self::create_messages_table(&conn)?;
+        Self::create_personas_table(&conn)?;
+        Self::create_grimoire_table(&conn)?;
+        Self::create_api_configs_table(&conn)?;
+        Self::create_projects_table(&conn)?;
+
+        // Create all indices
+        Self::create_performance_indices(&conn)?;
+
+        Ok(())
+    }
+
+    /// Create conversations table
+    fn create_conversations_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS conversations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -250,8 +265,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Messages table - Individual conversation messages
+    /// Create messages table
+    fn create_messages_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS messages (
                 id TEXT PRIMARY KEY,
@@ -266,8 +284,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Personas table - Character profiles and behavior
+    /// Create personas table
+    fn create_personas_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS personas (
                 id TEXT PRIMARY KEY,
@@ -282,8 +303,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Grimoire entries - Knowledge base system
+    /// Create grimoire entries table
+    fn create_grimoire_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS grimoire_entries (
                 id TEXT PRIMARY KEY,
@@ -299,8 +323,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // API configurations - External service management
+    /// Create API configurations table
+    fn create_api_configs_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS api_configs (
                 id TEXT PRIMARY KEY,
@@ -315,8 +342,11 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Projects table - Development project tracking
+    /// Create projects table
+    fn create_projects_table(conn: &Connection) -> AppResult<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS projects (
                 id TEXT PRIMARY KEY,
@@ -330,32 +360,22 @@ impl DatabaseManager {
             );",
             [],
         )?;
+        Ok(())
+    }
 
-        // Create indices for performance
-        conn.execute(
+    /// Create performance indices for all tables
+    fn create_performance_indices(conn: &Connection) -> AppResult<()> {
+        let indices = [
             "CREATE INDEX IF NOT EXISTS idx_conversations_persona ON conversations(persona_id);",
-            [],
-        )?;
-
-        conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);",
-            [],
-        )?;
-
-        conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);",
-            [],
-        )?;
-
-        conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_grimoire_category ON grimoire_entries(category);",
-            [],
-        )?;
-
-        conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_grimoire_tags ON grimoire_entries(tags);",
-            [],
-        )?;
+        ];
+
+        for index_sql in &indices {
+            conn.execute(index_sql, [])?;
+        }
 
         Ok(())
     }
@@ -381,6 +401,98 @@ impl DatabaseManager {
             .map_err(|e| AppError::io(format!("Failed to backup database: {}", e)))?;
 
         Ok(())
+    }
+
+    /// Execute a function within a database transaction
+    ///
+    /// This method automatically handles BEGIN, COMMIT, and ROLLBACK:
+    /// - Begins a transaction
+    /// - Executes the provided function
+    /// - Commits if the function succeeds
+    /// - Rolls back if the function returns an error or panics
+    ///
+    /// # Arguments
+    /// * `f` - A closure that performs database operations
+    ///
+    /// # Returns
+    /// * `Ok(T)` if the transaction succeeds
+    /// * `Err(AppError)` if the transaction fails or is rolled back
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// db_manager.with_transaction(|conn| {
+    ///     conn.execute("INSERT INTO users (name) VALUES (?)", params![name])?;
+    ///     conn.execute("INSERT INTO profiles (user_id) VALUES (?)", params![user_id])?;
+    ///     Ok(())
+    /// })?;
+    /// ```
+    pub fn with_transaction<T, F>(&self, f: F) -> AppResult<T>
+    where
+        F: FnOnce(&rusqlite::Transaction) -> AppResult<T>,
+    {
+        let mut conn = self.get_connection()?;
+
+        let tx = conn.transaction()
+            .map_err(|e| AppError::database(format!("Failed to begin transaction: {}", e)))?;
+
+        match f(&tx) {
+            Ok(result) => {
+                tx.commit()
+                    .map_err(|e| AppError::database(format!("Failed to commit transaction: {}", e)))?;
+                Ok(result)
+            }
+            Err(e) => {
+                // Rollback is automatic when transaction is dropped, but we can be explicit
+                let _ = tx.rollback();
+                Err(e)
+            }
+        }
+    }
+
+    /// Execute a function with a savepoint (nested transaction)
+    ///
+    /// Savepoints allow for partial rollbacks within a transaction.
+    /// This is useful for complex operations where you want to retry
+    /// specific parts without rolling back the entire transaction.
+    ///
+    /// # Arguments
+    /// * `conn` - An existing transaction or connection
+    /// * `savepoint_name` - Name for the savepoint
+    /// * `f` - A closure that performs database operations
+    ///
+    /// # Returns
+    /// * `Ok(T)` if the savepoint succeeds
+    /// * `Err(AppError)` if the savepoint fails or is rolled back
+    pub fn with_savepoint<T, F>(
+        conn: &rusqlite::Connection,
+        savepoint_name: &str,
+        f: F,
+    ) -> AppResult<T>
+    where
+        F: FnOnce(&rusqlite::Savepoint) -> AppResult<T>,
+    {
+        let sp = conn.savepoint_with_name(savepoint_name)
+            .map_err(|e| AppError::database(format!("Failed to create savepoint: {}", e)))?;
+
+        match f(&sp) {
+            Ok(result) => {
+                sp.commit()
+                    .map_err(|e| AppError::database(format!("Failed to commit savepoint: {}", e)))?;
+                Ok(result)
+            }
+            Err(e) => {
+                let _ = sp.rollback();
+                Err(e)
+            }
+        }
+    }
+
+    /// Check if a transaction is currently active on a connection
+    ///
+    /// This is useful for debugging and ensuring transactions are properly managed.
+    pub fn is_in_transaction(conn: &rusqlite::Connection) -> bool {
+        // SQLite returns true if in a transaction, false otherwise
+        conn.is_autocommit() == false
     }
 }
 
@@ -417,5 +529,254 @@ mod tests {
             .unwrap();
 
         assert!(db_path.exists());
+    }
+
+    #[test]
+    fn test_transaction_commit() {
+        let db_manager = DatabaseManager::new_in_memory().unwrap();
+
+        // Create a test table
+        {
+            let conn = db_manager.get_connection().unwrap();
+            conn.execute("CREATE TABLE test_users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)", [])
+                .unwrap();
+        }
+
+        // Execute operations in a transaction
+        let result = db_manager.with_transaction(|tx| {
+            tx.execute("INSERT INTO test_users (name) VALUES (?)", ["Alice"])?;
+            tx.execute("INSERT INTO test_users (name) VALUES (?)", ["Bob"])?;
+            Ok(())
+        });
+
+        assert!(result.is_ok());
+
+        // Verify both inserts were committed
+        let conn = db_manager.get_connection().unwrap();
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM test_users", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(count, 2);
+    }
+
+    #[test]
+    fn test_transaction_rollback_on_error() {
+        let db_manager = DatabaseManager::new_in_memory().unwrap();
+
+        // Create a test table
+        {
+            let conn = db_manager.get_connection().unwrap();
+            conn.execute("CREATE TABLE test_users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)", [])
+                .unwrap();
+        }
+
+        // Execute operations in a transaction that will fail
+        let result = db_manager.with_transaction(|tx| {
+            tx.execute("INSERT INTO test_users (name) VALUES (?)", ["Alice"])?;
+            // This will fail because we're returning an error
+            Err(AppError::validation("Test error - should rollback"))
+        });
+
+        assert!(result.is_err());
+
+        // Verify no inserts were committed (rollback worked)
+        let conn = db_manager.get_connection().unwrap();
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM test_users", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(count, 0);
+    }
+
+    #[test]
+    fn test_transaction_rollback_on_constraint_violation() {
+        let db_manager = DatabaseManager::new_in_memory().unwrap();
+
+        // Create a test table with a unique constraint
+        {
+            let conn = db_manager.get_connection().unwrap();
+            conn.execute(
+                "CREATE TABLE test_users (id INTEGER PRIMARY KEY, email TEXT NOT NULL UNIQUE)",
+                []
+            ).unwrap();
+        }
+
+        // First transaction succeeds
+        let result1 = db_manager.with_transaction(|tx| {
+            tx.execute("INSERT INTO test_users (email) VALUES (?)", ["test@example.com"])?;
+            Ok(())
+        });
+        assert!(result1.is_ok());
+
+        // Second transaction fails due to unique constraint
+        let result2 = db_manager.with_transaction(|tx| {
+            tx.execute("INSERT INTO test_users (email) VALUES (?)", ["test@example.com"])?;
+            Ok(())
+        });
+        assert!(result2.is_err());
+
+        // Verify only one row exists
+        let conn = db_manager.get_connection().unwrap();
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM test_users", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn test_transaction_with_return_value() {
+        let db_manager = DatabaseManager::new_in_memory().unwrap();
+
+        // Create a test table
+        {
+            let conn = db_manager.get_connection().unwrap();
+            conn.execute("CREATE TABLE test_users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)", [])
+                .unwrap();
+        }
+
+        // Execute transaction and return a value
+        let user_id = db_manager.with_transaction(|tx| {
+            tx.execute("INSERT INTO test_users (name) VALUES (?)", ["Alice"])?;
+            let id: i64 = tx.last_insert_rowid();
+            Ok(id)
+        });
+
+        assert!(user_id.is_ok());
+        assert_eq!(user_id.unwrap(), 1);
+    }
+
+    #[test]
+    fn test_savepoint_commit() {
+        let db_manager = DatabaseManager::new_in_memory().unwrap();
+
+        // Create a test table
+        {
+            let conn = db_manager.get_connection().unwrap();
+            conn.execute("CREATE TABLE test_data (id INTEGER PRIMARY KEY, value TEXT)", [])
+                .unwrap();
+        }
+
+        let mut conn = db_manager.get_connection().unwrap();
+
+        // Start a transaction
+        let tx = conn.transaction().unwrap();
+
+        // Insert first record
+        tx.execute("INSERT INTO test_data (value) VALUES (?)", ["before_savepoint"])
+            .unwrap();
+
+        // Use savepoint for nested operation
+        let result = DatabaseManager::with_savepoint(&tx, "sp1", |sp| {
+            sp.execute("INSERT INTO test_data (value) VALUES (?)", ["in_savepoint"])?;
+            Ok(())
+        });
+
+        assert!(result.is_ok());
+        tx.commit().unwrap();
+
+        // Verify both records exist
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM test_data", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(count, 2);
+    }
+
+    #[test]
+    fn test_savepoint_rollback() {
+        let db_manager = DatabaseManager::new_in_memory().unwrap();
+
+        // Create a test table
+        {
+            let conn = db_manager.get_connection().unwrap();
+            conn.execute("CREATE TABLE test_data (id INTEGER PRIMARY KEY, value TEXT)", [])
+                .unwrap();
+        }
+
+        let mut conn = db_manager.get_connection().unwrap();
+
+        // Start a transaction
+        let tx = conn.transaction().unwrap();
+
+        // Insert first record
+        tx.execute("INSERT INTO test_data (value) VALUES (?)", ["before_savepoint"])
+            .unwrap();
+
+        // Use savepoint that will fail
+        let result = DatabaseManager::with_savepoint(&tx, "sp1", |sp| {
+            sp.execute("INSERT INTO test_data (value) VALUES (?)", ["in_savepoint"])?;
+            Err(AppError::validation("Savepoint test error"))
+        });
+
+        assert!(result.is_err());
+        tx.commit().unwrap();
+
+        // Verify only the first record exists (savepoint was rolled back)
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM test_data", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(count, 1);
+
+        let value: String = conn
+            .query_row("SELECT value FROM test_data", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(value, "before_savepoint");
+    }
+
+    #[test]
+    fn test_is_in_transaction() {
+        let db_manager = DatabaseManager::new_in_memory().unwrap();
+        let mut conn = db_manager.get_connection().unwrap();
+
+        // Initially not in a transaction
+        assert!(!DatabaseManager::is_in_transaction(&conn));
+
+        // Start a transaction
+        let tx = conn.transaction().unwrap();
+        assert!(DatabaseManager::is_in_transaction(&tx));
+
+        // Commit the transaction
+        tx.commit().unwrap();
+
+        // No longer in a transaction
+        assert!(!DatabaseManager::is_in_transaction(&conn));
+    }
+
+    #[test]
+    fn test_nested_transactions_via_savepoints() {
+        let db_manager = DatabaseManager::new_in_memory().unwrap();
+
+        // Create a test table
+        {
+            let conn = db_manager.get_connection().unwrap();
+            conn.execute("CREATE TABLE test_levels (id INTEGER PRIMARY KEY, level INTEGER)", [])
+                .unwrap();
+        }
+
+        let result = db_manager.with_transaction(|tx| {
+            tx.execute("INSERT INTO test_levels (level) VALUES (?)", [1])?;
+
+            // First savepoint
+            DatabaseManager::with_savepoint(tx, "level2", |sp1| {
+                sp1.execute("INSERT INTO test_levels (level) VALUES (?)", [2])?;
+
+                // Nested savepoint
+                DatabaseManager::with_savepoint(sp1, "level3", |sp2| {
+                    sp2.execute("INSERT INTO test_levels (level) VALUES (?)", [3])?;
+                    Ok(())
+                })?;
+
+                Ok(())
+            })?;
+
+            Ok(())
+        });
+
+        assert!(result.is_ok());
+
+        // Verify all three levels were committed
+        let conn = db_manager.get_connection().unwrap();
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM test_levels", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(count, 3);
     }
 }

@@ -31,7 +31,14 @@
 	let environmentInfo = getEnvironmentInfo();
 	let systemHealth: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 	let showDiagnostics = false;
-	let diagnosticsData: any = {};
+	let diagnosticsData: {
+		apiHealth?: ReturnType<typeof checkApiHealth> extends Promise<infer T> ? T : never;
+		envHealth?: ReturnType<typeof checkEnvironmentHealth>;
+		errorPatterns?: ReturnType<typeof detectErrorPatterns>;
+		circuitBreakers?: ReturnType<typeof getCircuitBreakerMetrics>;
+		errorAnalytics?: ReturnType<typeof errorStore.getAnalytics>;
+		systemHealth?: 'healthy' | 'degraded' | 'unhealthy';
+	} = {};
 
 	// Enhanced state management
 	let retryCount = 0;

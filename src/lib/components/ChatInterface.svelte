@@ -13,13 +13,19 @@
 	let sending = false;
 	let messagesContainer: HTMLDivElement | undefined;
 	let environment = getEnvironment();
+	let previousConversationId: number | null = null;
+	let isInitialized = false;
 
-	$: if (conversation) {
+	// Reactive statement with race condition prevention
+	$: if (conversation && conversation.id !== previousConversationId && isInitialized) {
+		previousConversationId = conversation.id ?? null;
 		loadMessages();
 	}
 
 	onMount(() => {
+		isInitialized = true;
 		if (conversation) {
+			previousConversationId = conversation.id ?? null;
 			loadMessages();
 		}
 	});
@@ -29,7 +35,7 @@
 	});
 
 	async function loadMessages() {
-		if (!conversation?.id) return;
+		if (!conversation?.id || loading) return; // Prevent concurrent loads
 
 		try {
 			loading = true;
@@ -49,7 +55,9 @@
 		if (!messageInput.trim() || sending || !conversation?.id) return;
 
 		const userMessage = messageInput.trim();
-		messageInput = '';
+		// Store original input for restoration on error
+		const originalInput = messageInput;
+		messageInput = ''; // Clear optimistically
 		sending = true;
 
 		try {
@@ -85,6 +93,9 @@
 
 		} catch (error) {
 			console.error('Failed to send message:', error);
+
+			// Restore original input on error so user doesn't lose their message
+			messageInput = originalInput;
 
 			// In web mode, create a demo response
 			if (environment === 'web') {

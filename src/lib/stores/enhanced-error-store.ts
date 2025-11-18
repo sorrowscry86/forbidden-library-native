@@ -38,6 +38,16 @@ export interface EnhancedErrorStoreState {
   systemHealth: 'healthy' | 'degraded' | 'unhealthy';
 }
 
+// Error data export format
+export interface ErrorExportData {
+  timestamp: string;
+  systemHealth: 'healthy' | 'degraded' | 'unhealthy';
+  isOnline: boolean;
+  metrics: ErrorMetrics;
+  recentErrors: Array<Record<string, unknown>>;
+  recoveryStrategies: Record<ErrorCategory, RecoveryStrategy>;
+}
+
 // Default recovery strategies
 const DEFAULT_RECOVERY_STRATEGIES: Record<ErrorCategory, RecoveryStrategy> = {
   [ErrorCategory.API]: {
@@ -457,8 +467,15 @@ function createEnhancedErrorStore() {
     /**
      * Export error data for analysis
      */
-    exportErrorData: () => {
-      let exportData: any = {};
+    exportErrorData: (): ErrorExportData => {
+      let exportData: ErrorExportData = {
+        timestamp: '',
+        systemHealth: 'healthy',
+        isOnline: true,
+        metrics: initialState.metrics,
+        recentErrors: [],
+        recoveryStrategies: DEFAULT_RECOVERY_STRATEGIES
+      };
       update(state => {
         exportData = {
           timestamp: new Date().toISOString(),
