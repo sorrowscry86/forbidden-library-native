@@ -1,4 +1,5 @@
 pub mod query_optimizer;
+pub mod fts_search;
 
 use crate::errors::{AppError, AppResult};
 use r2d2::{Pool, PooledConnection};
@@ -250,6 +251,9 @@ impl DatabaseManager {
 
         // Create additional optimization indices
         query_optimizer::create_additional_indices(&conn)?;
+
+        // Initialize full-text search tables
+        fts_search::initialize_fts_tables(&conn)?;
 
         Ok(())
     }

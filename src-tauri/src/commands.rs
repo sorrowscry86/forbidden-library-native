@@ -222,6 +222,137 @@ pub async fn search_conversations(
         .map_err(|e| format!("Failed to search conversations: {}", e))
 }
 
+/// Advanced full-text search with filters
+#[tauri::command]
+pub async fn search_full_text(
+    query: String,
+    persona_id: Option<i64>,
+    date_from: Option<String>,
+    date_to: Option<String>,
+    archived: Option<bool>,
+    min_tokens: Option<i32>,
+    max_tokens: Option<i32>,
+    limit: Option<i32>,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::database::fts_search::SearchResult>, String> {
+    use crate::database::fts_search::{search_full_text as fts_search, SearchFilters};
+
+    tracing::info!("Full-text search for: {}", query);
+
+    let filters = if persona_id.is_some()
+        || date_from.is_some()
+        || date_to.is_some()
+        || archived.is_some()
+        || min_tokens.is_some()
+        || max_tokens.is_some()
+    {
+        Some(SearchFilters {
+            persona_id,
+            date_from,
+            date_to,
+            archived,
+            min_tokens,
+            max_tokens,
+        })
+    } else {
+        None
+    };
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    fts_search(&conn, &query, filters, limit)
+        .map_err(|e| format!("Search failed: {}", e))
+}
+
+/// Search only conversation titles
+#[tauri::command]
+pub async fn search_titles(
+    query: String,
+    limit: Option<i32>,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::database::fts_search::SearchResult>, String> {
+    use crate::database::fts_search::search_titles as fts_search_titles;
+
+    tracing::info!("Title search for: {}", query);
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    fts_search_titles(&conn, &query, limit)
+        .map_err(|e| format!("Title search failed: {}", e))
+}
+
+/// Search for exact phrases
+#[tauri::command]
+pub async fn search_phrases(
+    phrase: String,
+    limit: Option<i32>,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::database::fts_search::SearchResult>, String> {
+    use crate::database::fts_search::search_phrases as fts_search_phrases;
+
+    tracing::info!("Phrase search for: {}", phrase);
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    fts_search_phrases(&conn, &phrase, limit)
+        .map_err(|e| format!("Phrase search failed: {}", e))
+}
+
+/// Get search suggestions
+#[tauri::command]
+pub async fn get_search_suggestions(
+    partial_query: String,
+    limit: Option<i32>,
+    state: State<'_, AppState>,
+) -> Result<Vec<String>, String> {
+    use crate::database::fts_search::get_search_suggestions as fts_suggestions;
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    fts_suggestions(&conn, &partial_query, limit)
+        .map_err(|e| format!("Suggestions failed: {}", e))
+}
+
+/// Rebuild full-text search indices
+#[tauri::command]
+pub async fn rebuild_search_index(state: State<'_, AppState>) -> Result<String, String> {
+    use crate::database::fts_search::rebuild_fts_indices;
+
+    tracing::info!("Rebuilding full-text search indices");
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    rebuild_fts_indices(&conn)
+        .map_err(|e| format!("Index rebuild failed: {}", e))?;
+
+    Ok("Search indices rebuilt successfully".to_string())
+}
+
 #[tauri::command]
 pub async fn get_conversation(
     id: i64,
@@ -614,6 +745,92 @@ pub async fn export_conversation(
         }
         _ => Err(format!("Unsupported export format: {}", format)),
     }
+}
+
+/// Import conversation from JSON file
+#[tauri::command]
+pub async fn import_conversation(
+    json_data: String,
+    state: State<'_, AppState>,
+) -> Result<i64, String> {
+    tracing::info!("Importing conversation from JSON data");
+
+    // Parse the JSON data
+    let import_data: serde_json::Value = serde_json::from_str(&json_data)
+        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+    // Validate the format
+    let conversation_data = import_data["conversation"]
+        .as_object()
+        .ok_or("Invalid import format: missing 'conversation' object")?;
+
+    let messages_data = import_data["messages"]
+        .as_array()
+        .ok_or("Invalid import format: missing 'messages' array")?;
+
+    // Extract conversation details
+    let title = conversation_data["title"]
+        .as_str()
+        .ok_or("Invalid conversation: missing 'title'")?
+        .to_string();
+
+    let persona_id = conversation_data["persona_id"]
+        .as_i64()
+        .or_else(|| conversation_data["persona_id"].as_str().and_then(|s| s.parse().ok()));
+
+    // Create the conversation
+    let new_conversation = state
+        .services
+        .conversations
+        .create_conversation(title, persona_id)
+        .map_err(|e| format!("Failed to create conversation: {}", e))?;
+
+    let conversation_id = new_conversation
+        .id
+        .ok_or("Failed to get conversation ID")?;
+
+    // Import messages
+    let mut imported_count = 0;
+    for message_data in messages_data {
+        let role_str = message_data["role"]
+            .as_str()
+            .ok_or("Invalid message: missing 'role'")?;
+
+        let role = match role_str {
+            "User" | "user" => crate::models::MessageRole::User,
+            "Assistant" | "assistant" => crate::models::MessageRole::Assistant,
+            "System" | "system" => crate::models::MessageRole::System,
+            _ => return Err(format!("Invalid message role: {}", role_str)),
+        };
+
+        let content = message_data["content"]
+            .as_str()
+            .ok_or("Invalid message: missing 'content'")?
+            .to_string();
+
+        let tokens_used = message_data["tokens_used"]
+            .as_i64()
+            .map(|t| t as i32);
+
+        let model_used = message_data["model_used"]
+            .as_str()
+            .map(|s| s.to_string());
+
+        state
+            .services
+            .conversations
+            .add_message(conversation_id, role, content, tokens_used, model_used)
+            .map_err(|e| format!("Failed to import message: {}", e))?;
+
+        imported_count += 1;
+    }
+
+    tracing::info!(
+        "Successfully imported conversation with {} messages",
+        imported_count
+    );
+
+    Ok(conversation_id)
 }
 
 #[tauri::command]
