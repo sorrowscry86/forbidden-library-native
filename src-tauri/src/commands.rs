@@ -927,25 +927,31 @@ pub async fn check_for_updates() -> Result<serde_json::Value, String> {
 // ==================== AI PROVIDER COMMANDS ====================
 
 /// Check if an AI provider is available
+///
+/// Supports: OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, LM Studio, Ollama
 #[tauri::command]
 pub async fn check_ai_provider_availability(
     provider_type: String,
+    api_key: Option<String>,
     base_url: Option<String>,
+    endpoint: Option<String>,
+    deployment_name: Option<String>,
     port: Option<u16>,
 ) -> Result<bool, String> {
     use crate::ai_providers::AIProvider;
 
     tracing::info!("Checking availability for provider: {}", provider_type);
 
-    let provider = match provider_type.as_str() {
-        "lm_studio" => AIProvider::lm_studio(port),
-        "ollama" => AIProvider::ollama(port),
-        "openai_compatible" => {
-            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
-            AIProvider::openai_compatible(url, None)
-        }
-        _ => return Err(format!("Unknown provider type: {}", provider_type)),
-    };
+    let provider = create_ai_provider(
+        provider_type,
+        api_key,
+        base_url,
+        endpoint,
+        deployment_name,
+        None,
+        None,
+        port,
+    )?;
 
     provider
         .check_availability()
@@ -957,22 +963,26 @@ pub async fn check_ai_provider_availability(
 #[tauri::command]
 pub async fn list_ai_provider_models(
     provider_type: String,
+    api_key: Option<String>,
     base_url: Option<String>,
+    endpoint: Option<String>,
+    deployment_name: Option<String>,
     port: Option<u16>,
 ) -> Result<Vec<String>, String> {
     use crate::ai_providers::AIProvider;
 
     tracing::info!("Listing models for provider: {}", provider_type);
 
-    let provider = match provider_type.as_str() {
-        "lm_studio" => AIProvider::lm_studio(port),
-        "ollama" => AIProvider::ollama(port),
-        "openai_compatible" => {
-            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
-            AIProvider::openai_compatible(url, None)
-        }
-        _ => return Err(format!("Unknown provider type: {}", provider_type)),
-    };
+    let provider = create_ai_provider(
+        provider_type,
+        api_key,
+        base_url,
+        endpoint,
+        deployment_name,
+        None,
+        None,
+        port,
+    )?;
 
     provider
         .list_models()
@@ -986,9 +996,13 @@ pub async fn send_ai_provider_request(
     provider_type: String,
     model: String,
     messages: Vec<serde_json::Value>,
-    base_url: Option<String>,
-    port: Option<u16>,
     api_key: Option<String>,
+    base_url: Option<String>,
+    endpoint: Option<String>,
+    deployment_name: Option<String>,
+    api_version: Option<String>,
+    organization: Option<String>,
+    port: Option<u16>,
     temperature: Option<f32>,
     max_tokens: Option<i32>,
 ) -> Result<serde_json::Value, String> {
@@ -1000,15 +1014,16 @@ pub async fn send_ai_provider_request(
         model
     );
 
-    let provider = match provider_type.as_str() {
-        "lm_studio" => AIProvider::lm_studio(port),
-        "ollama" => AIProvider::ollama(port),
-        "openai_compatible" => {
-            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
-            AIProvider::openai_compatible(url, api_key)
-        }
-        _ => return Err(format!("Unknown provider type: {}", provider_type)),
-    };
+    let provider = create_ai_provider(
+        provider_type,
+        api_key,
+        base_url,
+        endpoint,
+        deployment_name,
+        api_version,
+        organization,
+        port,
+    )?;
 
     let chat_messages: Result<Vec<ChatMessage>, String> = messages
         .iter()
@@ -1046,6 +1061,48 @@ pub async fn send_ai_provider_request(
         "model": response.model,
         "tokens_used": response.tokens_used,
     }))
+}
+
+/// Helper function to create an AI provider from parameters
+fn create_ai_provider(
+    provider_type: String,
+    api_key: Option<String>,
+    base_url: Option<String>,
+    endpoint: Option<String>,
+    deployment_name: Option<String>,
+    api_version: Option<String>,
+    organization: Option<String>,
+    port: Option<u16>,
+) -> Result<crate::ai_providers::AIProvider, String> {
+    use crate::ai_providers::AIProvider;
+
+    match provider_type.as_str() {
+        "openai" => {
+            let key = api_key.ok_or("API key required for OpenAI")?;
+            Ok(AIProvider::openai(key, organization))
+        }
+        "anthropic" | "claude" => {
+            let key = api_key.ok_or("API key required for Anthropic")?;
+            Ok(AIProvider::anthropic(key))
+        }
+        "google_gemini" | "gemini" => {
+            let key = api_key.ok_or("API key required for Google Gemini")?;
+            Ok(AIProvider::google_gemini(key))
+        }
+        "azure_openai" | "azure" => {
+            let key = api_key.ok_or("API key required for Azure OpenAI")?;
+            let ep = endpoint.ok_or("Endpoint required for Azure OpenAI")?;
+            let deploy = deployment_name.ok_or("Deployment name required for Azure OpenAI")?;
+            Ok(AIProvider::azure_openai(key, ep, deploy, api_version))
+        }
+        "lm_studio" => Ok(AIProvider::lm_studio(port)),
+        "ollama" => Ok(AIProvider::ollama(port)),
+        "openai_compatible" => {
+            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
+            Ok(AIProvider::openai_compatible(url, api_key))
+        }
+        _ => Err(format!("Unknown provider type: {}", provider_type)),
+    }
 }
 
 #[cfg(test)]
