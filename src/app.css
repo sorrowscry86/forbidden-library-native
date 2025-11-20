@@ -2,6 +2,12 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* Syntax highlighting */
+@import 'highlight.js/styles/tokyo-night-dark.css';
+
+/* Math rendering */
+@import 'katex/dist/katex.min.css';
+
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
 	width: 8px;
