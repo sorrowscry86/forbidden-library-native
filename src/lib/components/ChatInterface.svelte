@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { onMount, afterUpdate } from 'svelte';
+	import { onMount, afterUpdate, onDestroy } from 'svelte';
 	import { invokeWithTimeout, ms } from '$lib/services/api';
 	import { isTauriAvailable, getEnvironment } from '$lib/utils/tauri-detection';
 	import MessageBubble from './MessageBubble.svelte';
+	import LoadingStates from './LoadingStates.svelte';
+	import SkeletonLoaders from './SkeletonLoaders.svelte';
+	import { simulateStreaming } from '$lib/utils/textStreaming';
 	import type { Conversation, Message, AiResponse } from '$lib/types/models';
 
 	export let conversation: Conversation;
@@ -15,6 +18,9 @@
 	let environment = getEnvironment();
 	let previousConversationId: number | null = null;
 	let isInitialized = false;
+	let streamingMessage: Message | null = null;
+	let streamingContent = '';
+	let cancelStreaming: (() => void) | null = null;
 
 	// Reactive statement with race condition prevention
 	$: if (conversation && conversation.id !== previousConversationId && isInitialized) {
@@ -32,6 +38,13 @@
 
 	afterUpdate(() => {
 		scrollToBottom();
+	});
+
+	onDestroy(() => {
+		// Clean up streaming if component is destroyed
+		if (cancelStreaming) {
+			cancelStreaming();
+		}
 	});
 
 	async function loadMessages() {
@@ -89,7 +102,30 @@
 				model_used: aiResponse.model_used
 			}, ms(8));
 
-			messages = [...messages, aiMsg];
+			// Create a temporary message for streaming effect
+			streamingMessage = { ...aiMsg, content: '' };
+			streamingContent = '';
+			messages = [...messages, streamingMessage];
+
+			// Simulate streaming effect
+			cancelStreaming = simulateStreaming(
+				aiResponse.content,
+				(partialText) => {
+					streamingContent = partialText;
+					if (streamingMessage) {
+						streamingMessage = { ...streamingMessage, content: partialText };
+						messages = [...messages.slice(0, -1), streamingMessage];
+					}
+				},
+				() => {
+					// Streaming complete
+					streamingMessage = null;
+					streamingContent = '';
+					messages = [...messages.slice(0, -1), aiMsg];
+					cancelStreaming = null;
+				},
+				'normal'
+			);
 
 		} catch (error) {
 			console.error('Failed to send message:', error);
@@ -213,8 +249,8 @@ function handleKeyPress(event: KeyboardEvent) {
 		class="flex-1 overflow-y-auto p-6 space-y-4"
 	>
 		{#if loading}
-			<div class="flex justify-center py-8">
-				<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+			<div class="space-y-4">
+				<SkeletonLoaders type="message" count={3} />
 			</div>
 		{:else if messages.length === 0}
 			<div class="flex flex-col items-center justify-center h-full text-gray-400">
@@ -242,18 +278,26 @@ function handleKeyPress(event: KeyboardEvent) {
 
 		{#if sending}
 			<div class="flex justify-start">
-				<div class="bg-gray-700 rounded-lg px-4 py-2 max-w-xs">
-					<div class="flex items-center space-x-2">
-						<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-						<span class="text-sm text-gray-300">
-							{#if environment === 'web'}
-								Processing demo response...
-							{:else}
-								AI is thinking...
-							{/if}
-						</span>
-					</div>
-				</div>
+				<LoadingStates
+					variant="typing"
+					size="small"
+					message={environment === 'web' ? 'Processing demo response...' : 'AI is thinking...'}
+				/>
+			</div>
+		{/if}
+
+		{#if streamingMessage && cancelStreaming}
+			<div class="flex justify-center mt-2">
+				<button
+					on:click={() => cancelStreaming && cancelStreaming()}
+					class="text-xs text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full transition-colors flex items-center space-x-1"
+					title="Show full response immediately"
+				>
+					<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+					</svg>
+					<span>Skip streaming</span>
+				</button>
 			</div>
 		{/if}
 	</div>

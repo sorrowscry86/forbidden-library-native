@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Message } from '$lib/types/models';
+	import MessageRenderer from './MessageRenderer.svelte';
 	export let message: Message;
 
 	function formatTime(dateString: string): string {
@@ -66,8 +67,15 @@
 			<!-- Message Content -->
 			<div class="flex flex-col {isUserMessage(message.role) ? 'items-end' : 'items-start'}">
 				<!-- Message Bubble -->
-				<div class="px-4 py-2 rounded-lg {getRoleColor(message.role)} {isUserMessage(message.role) ? 'rounded-br-sm' : 'rounded-bl-sm'}">
-					<p class="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+				<div class="px-4 py-2 rounded-lg {getRoleColor(message.role)} {isUserMessage(message.role) ? 'rounded-br-sm' : 'rounded-bl-sm'} message-content">
+					<div class="text-sm whitespace-pre-wrap break-words">
+						<MessageRenderer
+							content={message.content}
+							role={getSafeRole(message.role)}
+							enableMath={true}
+							enableCodeHighlight={true}
+						/>
+					</div>
 				</div>
 
 				<!-- Message Metadata -->
@@ -89,3 +97,65 @@
 	</div>
 </div>
 
+<style>
+	/* Message renderer content styling */
+	:global(.message-content code) {
+		background-color: rgba(0, 0, 0, 0.2);
+		padding: 0.1rem 0.3rem;
+		border-radius: 0.25rem;
+		font-size: 0.85em;
+	}
+
+	:global(.message-content pre) {
+		margin: 0.5rem 0;
+		overflow-x: auto;
+	}
+
+	:global(.message-content .code-block-wrapper) {
+		margin: 0.5rem 0;
+		border-radius: 0.375rem;
+		overflow: hidden;
+	}
+
+	:global(.message-content p) {
+		margin: 0.25rem 0;
+	}
+
+	:global(.message-content p:first-child) {
+		margin-top: 0;
+	}
+
+	:global(.message-content p:last-child) {
+		margin-bottom: 0;
+	}
+
+	:global(.message-content ul),
+	:global(.message-content ol) {
+		margin: 0.5rem 0;
+		padding-left: 1.5rem;
+	}
+
+	:global(.message-content li) {
+		margin: 0.25rem 0;
+	}
+
+	:global(.message-content h1),
+	:global(.message-content h2),
+	:global(.message-content h3),
+	:global(.message-content h4) {
+		margin: 0.75rem 0 0.5rem 0;
+		font-weight: 600;
+	}
+
+	:global(.message-content blockquote) {
+		border-left: 3px solid rgba(255, 255, 255, 0.2);
+		padding-left: 1rem;
+		margin: 0.5rem 0;
+		font-style: italic;
+	}
+
+	/* KaTeX math styling */
+	:global(.message-content .katex) {
+		font-size: 1em;
+	}
+</style>

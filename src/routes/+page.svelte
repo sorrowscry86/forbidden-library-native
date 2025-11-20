@@ -8,6 +8,9 @@
 	import ConversationList from '$lib/components/ConversationList.svelte';
 	import ChatInterface from '$lib/components/ChatInterface.svelte';
 	import ErrorNotification from '$lib/components/ErrorNotification.svelte';
+	import SearchPanel from '$lib/components/SearchPanel.svelte';
+	import LoadingStates from '$lib/components/LoadingStates.svelte';
+	import SkeletonLoaders from '$lib/components/SkeletonLoaders.svelte';
 	import type { Conversation } from '$lib/types/models';
 
 	let conversations: Conversation[] = [];
@@ -16,6 +19,7 @@
 	let error: string | null = null;
 	let environment = getEnvironment();
 	let environmentInfo = getEnvironmentInfo();
+	let searchPanelOpen = false;
 
 	// Initialize error store cleanup
 	let cleanupErrorStore: (() => void) | null = null;
@@ -24,7 +28,7 @@
 		// Initialize error store with cleanup
 		cleanupErrorStore = errorStore.init();
 		await loadConversations();
-		
+
 		// Show desktop welcome notification if running in desktop mode
 		if (isTauriAvailable()) {
 			try {
@@ -37,6 +41,9 @@
 				console.log('Notification not available:', error);
 			}
 		}
+
+		// Add global keyboard shortcuts
+		window.addEventListener('keydown', handleGlobalKeyboard);
 	});
 
 	onDestroy(() => {
@@ -44,7 +51,30 @@
 		if (cleanupErrorStore) {
 			cleanupErrorStore();
 		}
+
+		// Remove global keyboard shortcuts
+		window.removeEventListener('keydown', handleGlobalKeyboard);
 	});
+
+	function handleGlobalKeyboard(event: KeyboardEvent) {
+		// Ctrl+K or Cmd+K for search
+		if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+			event.preventDefault();
+			searchPanelOpen = true;
+		}
+
+		// Ctrl+N or Cmd+N for new conversation
+		if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
+			event.preventDefault();
+			createNewConversation();
+		}
+
+		// Ctrl+, or Cmd+, for settings
+		if ((event.ctrlKey || event.metaKey) && event.key === ',') {
+			event.preventDefault();
+			window.location.href = '/settings';
+		}
+	}
 
 	function clearError() {
 		error = null;
@@ -124,10 +154,45 @@
 	function selectConversation(conversation: Conversation | null) {
 		selectedConversation = conversation;
 	}
+
+	async function handleSearchSelect(event: CustomEvent<{ conversationId: number; messageId: number | null }>) {
+		const { conversationId, messageId } = event.detail;
+
+		// Find and select the conversation
+		const conversation = conversations.find(c => c.id === conversationId);
+		if (conversation) {
+			selectConversation(conversation);
+
+			// TODO: If messageId is provided, scroll to that specific message
+			// This would require ChatInterface to expose a scrollToMessage method
+		} else {
+			// If conversation not in current list, load it
+			try {
+				const conv = await invokeWithValidation<Conversation>(
+					'get_conversation',
+					{ id: conversationId },
+					(data) => data,
+					ms(8)
+				);
+				if (conv) {
+					selectConversation(conv);
+				}
+			} catch (err) {
+				console.error('Failed to load conversation:', err);
+			}
+		}
+	}
 </script>
 
 <!-- Error Notifications -->
 <ErrorNotification />
+
+<!-- Search Panel (Ctrl+K) -->
+<SearchPanel
+	bind:isOpen={searchPanelOpen}
+	onClose={() => (searchPanelOpen = false)}
+	on:select={handleSearchSelect}
+/>
 
 <!-- Environment Indicator -->
 {#if environment === 'web'}
@@ -143,25 +208,44 @@
 <div class="flex h-full">
 	<!-- Sidebar -->
 	<div class="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
-		<!-- New Conversation Button -->
-		<div class="p-4 border-b border-gray-700">
+		<!-- Action Buttons -->
+		<div class="p-4 border-b border-gray-700 space-y-2">
 			<button
 				on:click={createNewConversation}
 				class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+				title="New Conversation (Ctrl+N)"
 			>
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
 				</svg>
 				<span>New Conversation</span>
 			</button>
+
+			<button
+				on:click={() => (searchPanelOpen = true)}
+				class="w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-between"
+				title="Search (Ctrl+K)"
+			>
+				<div class="flex items-center space-x-2">
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+						></path>
+					</svg>
+					<span>Search</span>
+				</div>
+				<kbd class="text-xs bg-gray-800 px-2 py-1 rounded text-gray-400">Ctrl+K</kbd>
+			</button>
 		</div>
 
 		<!-- Conversation List -->
 		<div class="flex-1 overflow-y-auto">
 			{#if loading}
-				<div class="p-4 text-center text-gray-400">
-					<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-					<p class="mt-2">Loading conversations...</p>
+				<div class="p-4 space-y-3">
+					<SkeletonLoaders type="conversation" count={5} />
 				</div>
 			{:else if error}
 				<div class="p-4 text-center text-red-400">
