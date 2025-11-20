@@ -222,6 +222,137 @@ pub async fn search_conversations(
         .map_err(|e| format!("Failed to search conversations: {}", e))
 }
 
+/// Advanced full-text search with filters
+#[tauri::command]
+pub async fn search_full_text(
+    query: String,
+    persona_id: Option<i64>,
+    date_from: Option<String>,
+    date_to: Option<String>,
+    archived: Option<bool>,
+    min_tokens: Option<i32>,
+    max_tokens: Option<i32>,
+    limit: Option<i32>,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::database::fts_search::SearchResult>, String> {
+    use crate::database::fts_search::{search_full_text as fts_search, SearchFilters};
+
+    tracing::info!("Full-text search for: {}", query);
+
+    let filters = if persona_id.is_some()
+        || date_from.is_some()
+        || date_to.is_some()
+        || archived.is_some()
+        || min_tokens.is_some()
+        || max_tokens.is_some()
+    {
+        Some(SearchFilters {
+            persona_id,
+            date_from,
+            date_to,
+            archived,
+            min_tokens,
+            max_tokens,
+        })
+    } else {
+        None
+    };
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    fts_search(&conn, &query, filters, limit)
+        .map_err(|e| format!("Search failed: {}", e))
+}
+
+/// Search only conversation titles
+#[tauri::command]
+pub async fn search_titles(
+    query: String,
+    limit: Option<i32>,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::database::fts_search::SearchResult>, String> {
+    use crate::database::fts_search::search_titles as fts_search_titles;
+
+    tracing::info!("Title search for: {}", query);
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    fts_search_titles(&conn, &query, limit)
+        .map_err(|e| format!("Title search failed: {}", e))
+}
+
+/// Search for exact phrases
+#[tauri::command]
+pub async fn search_phrases(
+    phrase: String,
+    limit: Option<i32>,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::database::fts_search::SearchResult>, String> {
+    use crate::database::fts_search::search_phrases as fts_search_phrases;
+
+    tracing::info!("Phrase search for: {}", phrase);
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    fts_search_phrases(&conn, &phrase, limit)
+        .map_err(|e| format!("Phrase search failed: {}", e))
+}
+
+/// Get search suggestions
+#[tauri::command]
+pub async fn get_search_suggestions(
+    partial_query: String,
+    limit: Option<i32>,
+    state: State<'_, AppState>,
+) -> Result<Vec<String>, String> {
+    use crate::database::fts_search::get_search_suggestions as fts_suggestions;
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    fts_suggestions(&conn, &partial_query, limit)
+        .map_err(|e| format!("Suggestions failed: {}", e))
+}
+
+/// Rebuild full-text search indices
+#[tauri::command]
+pub async fn rebuild_search_index(state: State<'_, AppState>) -> Result<String, String> {
+    use crate::database::fts_search::rebuild_fts_indices;
+
+    tracing::info!("Rebuilding full-text search indices");
+
+    let conn = state
+        .services
+        .conversations
+        .db
+        .get_connection()
+        .map_err(|e| format!("Database connection error: {}", e))?;
+
+    rebuild_fts_indices(&conn)
+        .map_err(|e| format!("Index rebuild failed: {}", e))?;
+
+    Ok("Search indices rebuilt successfully".to_string())
+}
+
 #[tauri::command]
 pub async fn get_conversation(
     id: i64,
@@ -616,6 +747,92 @@ pub async fn export_conversation(
     }
 }
 
+/// Import conversation from JSON file
+#[tauri::command]
+pub async fn import_conversation(
+    json_data: String,
+    state: State<'_, AppState>,
+) -> Result<i64, String> {
+    tracing::info!("Importing conversation from JSON data");
+
+    // Parse the JSON data
+    let import_data: serde_json::Value = serde_json::from_str(&json_data)
+        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+    // Validate the format
+    let conversation_data = import_data["conversation"]
+        .as_object()
+        .ok_or("Invalid import format: missing 'conversation' object")?;
+
+    let messages_data = import_data["messages"]
+        .as_array()
+        .ok_or("Invalid import format: missing 'messages' array")?;
+
+    // Extract conversation details
+    let title = conversation_data["title"]
+        .as_str()
+        .ok_or("Invalid conversation: missing 'title'")?
+        .to_string();
+
+    let persona_id = conversation_data["persona_id"]
+        .as_i64()
+        .or_else(|| conversation_data["persona_id"].as_str().and_then(|s| s.parse().ok()));
+
+    // Create the conversation
+    let new_conversation = state
+        .services
+        .conversations
+        .create_conversation(title, persona_id)
+        .map_err(|e| format!("Failed to create conversation: {}", e))?;
+
+    let conversation_id = new_conversation
+        .id
+        .ok_or("Failed to get conversation ID")?;
+
+    // Import messages
+    let mut imported_count = 0;
+    for message_data in messages_data {
+        let role_str = message_data["role"]
+            .as_str()
+            .ok_or("Invalid message: missing 'role'")?;
+
+        let role = match role_str {
+            "User" | "user" => crate::models::MessageRole::User,
+            "Assistant" | "assistant" => crate::models::MessageRole::Assistant,
+            "System" | "system" => crate::models::MessageRole::System,
+            _ => return Err(format!("Invalid message role: {}", role_str)),
+        };
+
+        let content = message_data["content"]
+            .as_str()
+            .ok_or("Invalid message: missing 'content'")?
+            .to_string();
+
+        let tokens_used = message_data["tokens_used"]
+            .as_i64()
+            .map(|t| t as i32);
+
+        let model_used = message_data["model_used"]
+            .as_str()
+            .map(|s| s.to_string());
+
+        state
+            .services
+            .conversations
+            .add_message(conversation_id, role, content, tokens_used, model_used)
+            .map_err(|e| format!("Failed to import message: {}", e))?;
+
+        imported_count += 1;
+    }
+
+    tracing::info!(
+        "Successfully imported conversation with {} messages",
+        imported_count
+    );
+
+    Ok(conversation_id)
+}
+
 #[tauri::command]
 pub async fn backup_database(
     backup_path: String,
@@ -927,25 +1144,31 @@ pub async fn check_for_updates() -> Result<serde_json::Value, String> {
 // ==================== AI PROVIDER COMMANDS ====================
 
 /// Check if an AI provider is available
+///
+/// Supports: OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, LM Studio, Ollama
 #[tauri::command]
 pub async fn check_ai_provider_availability(
     provider_type: String,
+    api_key: Option<String>,
     base_url: Option<String>,
+    endpoint: Option<String>,
+    deployment_name: Option<String>,
     port: Option<u16>,
 ) -> Result<bool, String> {
     use crate::ai_providers::AIProvider;
 
     tracing::info!("Checking availability for provider: {}", provider_type);
 
-    let provider = match provider_type.as_str() {
-        "lm_studio" => AIProvider::lm_studio(port),
-        "ollama" => AIProvider::ollama(port),
-        "openai_compatible" => {
-            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
-            AIProvider::openai_compatible(url, None)
-        }
-        _ => return Err(format!("Unknown provider type: {}", provider_type)),
-    };
+    let provider = create_ai_provider(
+        provider_type,
+        api_key,
+        base_url,
+        endpoint,
+        deployment_name,
+        None,
+        None,
+        port,
+    )?;
 
     provider
         .check_availability()
@@ -957,22 +1180,26 @@ pub async fn check_ai_provider_availability(
 #[tauri::command]
 pub async fn list_ai_provider_models(
     provider_type: String,
+    api_key: Option<String>,
     base_url: Option<String>,
+    endpoint: Option<String>,
+    deployment_name: Option<String>,
     port: Option<u16>,
 ) -> Result<Vec<String>, String> {
     use crate::ai_providers::AIProvider;
 
     tracing::info!("Listing models for provider: {}", provider_type);
 
-    let provider = match provider_type.as_str() {
-        "lm_studio" => AIProvider::lm_studio(port),
-        "ollama" => AIProvider::ollama(port),
-        "openai_compatible" => {
-            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
-            AIProvider::openai_compatible(url, None)
-        }
-        _ => return Err(format!("Unknown provider type: {}", provider_type)),
-    };
+    let provider = create_ai_provider(
+        provider_type,
+        api_key,
+        base_url,
+        endpoint,
+        deployment_name,
+        None,
+        None,
+        port,
+    )?;
 
     provider
         .list_models()
@@ -986,9 +1213,13 @@ pub async fn send_ai_provider_request(
     provider_type: String,
     model: String,
     messages: Vec<serde_json::Value>,
-    base_url: Option<String>,
-    port: Option<u16>,
     api_key: Option<String>,
+    base_url: Option<String>,
+    endpoint: Option<String>,
+    deployment_name: Option<String>,
+    api_version: Option<String>,
+    organization: Option<String>,
+    port: Option<u16>,
     temperature: Option<f32>,
     max_tokens: Option<i32>,
 ) -> Result<serde_json::Value, String> {
@@ -1000,15 +1231,16 @@ pub async fn send_ai_provider_request(
         model
     );
 
-    let provider = match provider_type.as_str() {
-        "lm_studio" => AIProvider::lm_studio(port),
-        "ollama" => AIProvider::ollama(port),
-        "openai_compatible" => {
-            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
-            AIProvider::openai_compatible(url, api_key)
-        }
-        _ => return Err(format!("Unknown provider type: {}", provider_type)),
-    };
+    let provider = create_ai_provider(
+        provider_type,
+        api_key,
+        base_url,
+        endpoint,
+        deployment_name,
+        api_version,
+        organization,
+        port,
+    )?;
 
     let chat_messages: Result<Vec<ChatMessage>, String> = messages
         .iter()
@@ -1046,6 +1278,48 @@ pub async fn send_ai_provider_request(
         "model": response.model,
         "tokens_used": response.tokens_used,
     }))
+}
+
+/// Helper function to create an AI provider from parameters
+fn create_ai_provider(
+    provider_type: String,
+    api_key: Option<String>,
+    base_url: Option<String>,
+    endpoint: Option<String>,
+    deployment_name: Option<String>,
+    api_version: Option<String>,
+    organization: Option<String>,
+    port: Option<u16>,
+) -> Result<crate::ai_providers::AIProvider, String> {
+    use crate::ai_providers::AIProvider;
+
+    match provider_type.as_str() {
+        "openai" => {
+            let key = api_key.ok_or("API key required for OpenAI")?;
+            Ok(AIProvider::openai(key, organization))
+        }
+        "anthropic" | "claude" => {
+            let key = api_key.ok_or("API key required for Anthropic")?;
+            Ok(AIProvider::anthropic(key))
+        }
+        "google_gemini" | "gemini" => {
+            let key = api_key.ok_or("API key required for Google Gemini")?;
+            Ok(AIProvider::google_gemini(key))
+        }
+        "azure_openai" | "azure" => {
+            let key = api_key.ok_or("API key required for Azure OpenAI")?;
+            let ep = endpoint.ok_or("Endpoint required for Azure OpenAI")?;
+            let deploy = deployment_name.ok_or("Deployment name required for Azure OpenAI")?;
+            Ok(AIProvider::azure_openai(key, ep, deploy, api_version))
+        }
+        "lm_studio" => Ok(AIProvider::lm_studio(port)),
+        "ollama" => Ok(AIProvider::ollama(port)),
+        "openai_compatible" => {
+            let url = base_url.ok_or("Base URL required for OpenAI compatible provider")?;
+            Ok(AIProvider::openai_compatible(url, api_key))
+        }
+        _ => Err(format!("Unknown provider type: {}", provider_type)),
+    }
 }
 
 #[cfg(test)]

@@ -27,6 +27,27 @@ export default defineConfig(({ mode }) => {
     minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
     // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_DEBUG,
+
+    // Performance optimizations
+    rollupOptions: {
+      output: {
+        // Manual chunk splitting for better caching
+        manualChunks: {
+          // Vendor chunks for third-party dependencies
+          'vendor-svelte': ['svelte', '@sveltejs/kit'],
+          'vendor-tauri': ['@tauri-apps/api'],
+          'vendor-ui': ['lucide-svelte'],
+          'vendor-markdown': ['marked', 'highlight.js', 'katex'],
+          'vendor-monitoring': ['@sentry/sveltekit'],
+        },
+      },
+    },
+
+    // Chunk size optimization
+    chunkSizeWarningLimit: 1000, // Warn if chunks exceed 1MB
+
+    // Asset inline limit (smaller assets will be inlined as base64)
+    assetsInlineLimit: 4096, // 4KB
   },
 
   // Environment variables available to the frontend

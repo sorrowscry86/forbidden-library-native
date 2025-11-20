@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 /// Conversation service - Manages chat sessions and message history
 pub struct ConversationService {
-    db: std::sync::Arc<DatabaseManager>,
+    pub db: std::sync::Arc<DatabaseManager>,
 }
 
 impl ConversationService {

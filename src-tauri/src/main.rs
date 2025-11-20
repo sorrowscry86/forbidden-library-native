@@ -116,6 +116,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             commands::create_conversation,
             commands::get_conversations,
             commands::search_conversations,
+            commands::search_full_text,
+            commands::search_titles,
+            commands::search_phrases,
+            commands::get_search_suggestions,
+            commands::rebuild_search_index,
             commands::get_conversation,
             commands::delete_conversation,
             commands::archive_conversation,
@@ -136,6 +141,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             commands::send_ai_request,
             // File management commands
             commands::export_conversation,
+            commands::import_conversation,
             commands::backup_database,
             // Monitoring and testing commands
             commands::test_sentry,
